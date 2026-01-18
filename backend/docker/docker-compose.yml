@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: eknmusic-postgres
+    environment:
+      POSTGRES_DB: eknmusic_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - eknmusic-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (for local development)
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: eknmusic-backend
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: eknmusic_dev
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: dev_password
+      ENVIRONMENT: development
+      DEBUG: "true"
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../src:/app/src
+      - ../tests:/app/tests
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - eknmusic-network
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Redis (optional, for caching/sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: eknmusic-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - eknmusic-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - with-redis
+
+  # pgAdmin (optional, for database management)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: eknmusic-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@eknmusic.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - eknmusic-network
+    profiles:
+      - with-pgadmin
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  eknmusic-network:
+    driver: bridge
