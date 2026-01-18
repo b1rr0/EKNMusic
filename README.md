@@ -1,6 +1,7 @@
 # EKNMusic
 
 Cross-platform music application with serverless backend and desktop client.
+Writen only with AI assistants
 
 ## Project Overview
 
@@ -59,18 +60,68 @@ See [backend/README.md](backend/README.md) for detailed instructions.
 
 ### Desktop Client Development
 
-1. **Prerequisites**
-   - C++ compiler (MSVC/GCC/Clang)
-   - Qt 6.x SDK
-   - CMake 3.16+
+#### Windows Prerequisites
 
-2. **Build**
-   ```bash
-   cd client
-   mkdir build && cd build
-   cmake .. -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x
-   cmake --build .
-   ```
+1. **Install Visual Studio 2022**
+   - Download from: https://visualstudio.microsoft.com/downloads/
+   - Select "Desktop development with C++" workload
+   - This includes MSVC compiler, Windows SDK, and CMake
+
+2. **Install Qt6**
+   - Download Qt Online Installer from: https://www.qt.io/download-qt-installer
+   - During installation, select:
+     - Qt 6.6 or later
+     - MSVC 2019 64-bit component
+     - Qt Multimedia
+     - Qt Creator (optional)
+
+3. **Install CMake (if needed)**
+   - Download from: https://cmake.org/download/
+   - Add CMake to PATH during installation
+
+#### Linux Prerequisites (Ubuntu/Debian)
+
+```bash
+# Install build essentials
+sudo apt update
+sudo apt install build-essential cmake git
+
+# Install Qt6
+sudo apt install qt6-base-dev qt6-multimedia-dev libqt6multimedia6
+```
+
+#### macOS Prerequisites
+
+```bash
+# Install Xcode Command Line Tools
+xcode-select --install
+
+# Install Homebrew (if needed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install Qt6 and CMake
+brew install qt@6 cmake
+```
+
+#### Build Instructions
+
+```bash
+cd client
+mkdir build && cd build
+
+# Windows with Visual Studio
+cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="C:/Qt/6.6.0/msvc2019_64" ..
+
+# Linux/macOS
+cmake -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x ..
+
+# Build
+cmake --build . --config Release
+
+# Run
+./Release/EKNMusic.exe     # Windows
+./EKNMusic                  # Linux/macOS
+```
 
 See [client/README.md](client/README.md) for detailed instructions.
 

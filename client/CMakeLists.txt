@@ -36,17 +36,21 @@ include_directories(
 # Source files
 set(SOURCES
     src/main.cpp
-    # Add your source files here
-    # src/ui/mainwindow.cpp
-    # src/api/apiclient.cpp
-    # src/services/authservice.cpp
+    src/ui/loginwindow.cpp
+    src/ui/mainwindow.cpp
+    src/ui/likedsongs.cpp
+    src/ui/searchpage.cpp
+    src/ui/downloadedpage.cpp
+    src/ui/playerwidget.cpp
 )
 
 set(HEADERS
-    # Add your header files here
-    # src/ui/mainwindow.h
-    # src/api/apiclient.h
-    # src/services/authservice.h
+    src/ui/loginwindow.h
+    src/ui/mainwindow.h
+    src/ui/likedsongs.h
+    src/ui/searchpage.h
+    src/ui/downloadedpage.h
+    src/ui/playerwidget.h
 )
 
 set(UI_FILES
@@ -61,8 +65,9 @@ set(RESOURCES
 # Platform-specific settings
 if(WIN32)
     # Windows specific settings
-    set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_SOURCE_DIR}/platform/windows/app.rc")
-    set(SOURCES ${SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
+    # TODO: Add app icon in future iterations
+    # set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_SOURCE_DIR}/platform/windows/app.rc")
+    # set(SOURCES ${SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
 
     # Enable console for debug builds on Windows
     if(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -74,11 +79,12 @@ endif()
 
 if(APPLE)
     # macOS specific settings
-    set(MACOSX_BUNDLE_ICON_FILE icon.icns)
-    set(APP_ICON_MACOSX "${CMAKE_SOURCE_DIR}/platform/macos/icon.icns")
-    set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES
-        MACOSX_PACKAGE_LOCATION "Resources")
-    set(SOURCES ${SOURCES} ${APP_ICON_MACOSX})
+    # TODO: Add app icon in future iterations
+    # set(MACOSX_BUNDLE_ICON_FILE icon.icns)
+    # set(APP_ICON_MACOSX "${CMAKE_SOURCE_DIR}/platform/macos/icon.icns")
+    # set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES
+    #     MACOSX_PACKAGE_LOCATION "Resources")
+    # set(SOURCES ${SOURCES} ${APP_ICON_MACOSX})
 endif()
 
 if(UNIX AND NOT APPLE)

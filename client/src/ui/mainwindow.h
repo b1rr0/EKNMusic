@@ -7,6 +7,8 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QWidget>
+#include <QStyle>
 
 // Forward declarations
 class PlayerWidget;
@@ -41,10 +43,10 @@ private:
     // Sidebar
     QWidget *sidebar;
     QVBoxLayout *sidebarLayout;
+    QLabel *logoLabel;
     QPushButton *likedSongsBtn;
     QPushButton *searchBtn;
     QPushButton *downloadedBtn;
-    QLabel *logoLabel;
 
     // Content area
     QWidget *contentArea;

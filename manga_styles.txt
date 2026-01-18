@@ -1,0 +1,13 @@
+Manga Style Guidelines for EKNMusic:
+
+Background: #FFFFFF (white)
+Sidebar: #F0F0F0 (light gray)
+Text: #000000 (black)
+Secondary text: #666666 or #333333
+Borders: 3-4px solid #000000 (thick black borders)
+Hover: #E8E8E8 or #F5F5F5
+Active/Selected: #000000 background with #FFFFFF text
+Buttons: Black background (#000000) with white text (#FFFFFF)
+Or white background (#FFFFFF) with black border (3px solid #000000)
+
+No gradients, no transparency, pure black and white with gray tones
