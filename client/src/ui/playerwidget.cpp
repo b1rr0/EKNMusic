@@ -27,14 +27,17 @@ PlayerWidget::~PlayerWidget()
 void PlayerWidget::setupUI()
 {
     mainLayout = new QHBoxLayout(this);
-    mainLayout->setContentsMargins(15, 10, 15, 10);
+    mainLayout->setContentsMargins(0, 0, 0, 0); // Remove margins for full width
     mainLayout->setSpacing(0);
+
+    // Set fixed height (20% bigger than before: 80 -> 96)
+    setFixedHeight(96);
 
     // === Left Section: Song Info ===
     songInfoWidget = new QWidget(this);
     songInfoWidget->setFixedWidth(250);
     songInfoLayout = new QHBoxLayout(songInfoWidget);
-    songInfoLayout->setContentsMargins(0, 0, 0, 0);
+    songInfoLayout->setContentsMargins(15, 0, 0, 0); // Left padding
     songInfoLayout->setSpacing(10);
 
     // Album art (clickable)
@@ -130,7 +133,7 @@ void PlayerWidget::setupUI()
     volumeWidget = new QWidget(this);
     volumeWidget->setFixedWidth(150);
     volumeLayout = new QHBoxLayout(volumeWidget);
-    volumeLayout->setContentsMargins(0, 0, 0, 0);
+    volumeLayout->setContentsMargins(0, 0, 15, 0); // Right padding
     volumeLayout->setSpacing(8);
 
     volumeButton = createControlButton("🔊", 24);

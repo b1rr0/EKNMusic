@@ -12,7 +12,6 @@
 
 // Forward declarations
 class PlayerWidget;
-class LikedSongsPage;
 class SearchPage;
 class DownloadedSongsPage;
 
@@ -25,7 +24,6 @@ public:
     ~MainWindow();
 
 private slots:
-    void showLikedSongs();
     void showSearch();
     void showDownloaded();
 
@@ -44,7 +42,6 @@ private:
     QWidget *sidebar;
     QVBoxLayout *sidebarLayout;
     QLabel *logoLabel;
-    QPushButton *likedSongsBtn;
     QPushButton *searchBtn;
     QPushButton *downloadedBtn;
 
@@ -54,7 +51,6 @@ private:
     QStackedWidget *stackedWidget;
 
     // Pages
-    LikedSongsPage *likedSongsPage;
     SearchPage *searchPage;
     DownloadedSongsPage *downloadedPage;
 

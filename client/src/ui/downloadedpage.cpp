@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QFileInfo>
 #include <QTimer>
+#include <QMovie>
 
 DownloadedSongsPage::DownloadedSongsPage(QWidget *parent)
     : QWidget(parent)
@@ -28,7 +29,7 @@ void DownloadedSongsPage::setupUI()
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(40, 40, 40, 40);
 
-    // Simple background
+    // Light background
     setStyleSheet(
         "QWidget {"
         "   background-color: #f5f5f5;"
@@ -86,7 +87,7 @@ void DownloadedSongsPage::setupUI()
 
     // Simple song list widget with drag & drop
     songListWidget = new QListWidget(this);
-    songListWidget->setSpacing(12); // Add spacing between items
+    songListWidget->setSpacing(0); // NO spacing between items (Spotify style)
     songListWidget->setDragEnabled(true);
     songListWidget->setAcceptDrops(true);
     songListWidget->setDropIndicatorShown(true);
@@ -100,21 +101,17 @@ void DownloadedSongsPage::setupUI()
         "}"
         "QListWidget::item {"
         "   background-color: white;"
-        "   border-radius: 12px;"
-        "   border: 1px solid #e0e0e0;"
+        "   border: none;"
+        "   border-bottom: 1px solid #e0e0e0;"
+        "   border-radius: 0px;"
         "}"
         "QListWidget::item:hover {"
         "   background-color: #fafafa;"
-        "   border: 1px solid #d0d0d0;"
-        "   cursor: move;"
+        "   cursor: pointer;"
         "}"
         "QListWidget::item:selected {"
         "   background-color: #e8f4fd;"
-        "   border: 2px solid #4a9eff;"
-        "}"
-        "QListWidget::item:selected:active {"
-        "   background-color: #d0e9ff;"
-        "   border: 2px dashed #4a9eff;"
+        "   border-left: 3px solid #4a9eff;"
         "}"
         "QScrollBar:vertical {"
         "   background: transparent;"
@@ -187,52 +184,86 @@ void DownloadedSongsPage::refreshSongList()
 QWidget* DownloadedSongsPage::createDownloadedSongItem(const Track &track, int index)
 {
     QWidget *widget = new QWidget();
-    widget->setMinimumHeight(80);
+    widget->setMinimumHeight(64);
     widget->setStyleSheet(
         "QWidget {"
         "   background-color: transparent;"
-        "   border-radius: 12px;"
         "}"
     );
     QHBoxLayout *layout = new QHBoxLayout(widget);
-    layout->setContentsMargins(20, 15, 20, 15);
-    layout->setSpacing(15);
+    layout->setContentsMargins(16, 8, 16, 8);
+    layout->setSpacing(12);
 
-    // Drag handle icon
-    QLabel *dragHandle = new QLabel("⋮⋮");
-    dragHandle->setFixedSize(20, 36);
-    dragHandle->setAlignment(Qt::AlignCenter);
-    dragHandle->setStyleSheet(
-        "color: #cccccc;"
-        "font-size: 14px;"
-        "font-weight: bold;"
-        "background: transparent;"
-    );
-    dragHandle->setCursor(Qt::OpenHandCursor);
-    dragHandle->setToolTip("Drag to reorder");
+    // Play button/animation column (instead of index)
+    bool isPlaying = (m_currentPlayingFile == track.filePath());
 
-    // Music icon
-    QLabel *iconLabel = new QLabel("♪");
-    iconLabel->setFixedSize(36, 36);
-    iconLabel->setAlignment(Qt::AlignCenter);
-    iconLabel->setStyleSheet(
+    QWidget *playWidget = new QWidget();playWidget->setObjectName("playWidget_" + QString::number(index));
+	playWidget->setFixedSize(32, 32);  // Увеличил контейнер для гифки
+	playWidget->setCursor(Qt::PointingHandCursor);
+
+	QLabel *playIconLabel = new QLabel(playWidget);
+	playIconLabel->setScaledContents(true);
+	playIconLabel->setAlignment(Qt::AlignCenter);
+
+	if (isPlaying) {
+    	// Show animated GIF for currently playing track (bigger)
+    	playIconLabel->setGeometry(0, 0, 32, 32);  // Гифка 32x32
+    	QMovie *movie = new QMovie(":/images/src/resources/images/songAnimation.gif", QByteArray(), playWidget);
+    	playIconLabel->setMovie(movie);
+    	movie->start();
+	} else {
+    	// Show static play button icon (original size)
+    	playIconLabel->setGeometry(8, 8, 16, 16);  // Иконка остается 16x16
+    	QPixmap playIcon(":/images/src/resources/images/playButton.png");
+    	playIconLabel->setPixmap(playIcon.scaled(12, 12, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+}
+
+    // Make widget clickable
+    QPushButton *invisibleBtn = new QPushButton(playWidget);
+    invisibleBtn->setGeometry(0, 0, 32, 32);
+    invisibleBtn->setStyleSheet("QPushButton { background: transparent; border: none; }");
+    invisibleBtn->setCursor(Qt::PointingHandCursor);
+    connect(invisibleBtn, &QPushButton::clicked, this, [this, index, track]() {
+        m_currentPlayingFile = track.filePath();
+        onPlayButtonClicked(index);
+        refreshSongList(); // Refresh to show animation
+    });
+
+    // Album art column (show actual album art from track)
+    QLabel *albumArtLabel = new QLabel();
+    albumArtLabel->setFixedSize(48, 48);
+    albumArtLabel->setStyleSheet(
         "background-color: #e0e0e0;"
         "border: 1px solid #d0d0d0;"
-        "border-radius: 18px;"
-        "color: #000000;"
-        "font-size: 18px;"
-        "font-weight: bold;"
+        "border-radius: 4px;"
     );
 
-    // Song info
-    QVBoxLayout *infoLayout = new QVBoxLayout();
-    infoLayout->setSpacing(5);
+    // Load album art if available
+    if (!track.albumArt().isNull()) {
+        QPixmap scaledArt = track.albumArt().scaled(48, 48, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        albumArtLabel->setPixmap(scaledArt);
+        albumArtLabel->setScaledContents(true);
+    } else {
+        // Fallback music icon
+        QLabel *fallbackIcon = new QLabel("♪", albumArtLabel);
+        fallbackIcon->setAlignment(Qt::AlignCenter);
+        fallbackIcon->setGeometry(0, 0, 48, 48);
+        fallbackIcon->setStyleSheet("color: #888888; font-size: 20px; background: transparent;");
+    }
+
+    // Title & Artist column (stacked vertically)
+    QWidget *titleArtistWidget = new QWidget();
+    titleArtistWidget->setStyleSheet("background: transparent;");
+    QVBoxLayout *titleArtistLayout = new QVBoxLayout(titleArtistWidget);
+    titleArtistLayout->setSpacing(2);
+    titleArtistLayout->setContentsMargins(0, 0, 0, 0);
 
     QLabel *titleLabel = new QLabel(track.title());
     titleLabel->setStyleSheet(
         "font-size: 15px;"
         "font-weight: 600;"
         "color: #000000;"
+        "background: transparent;"
     );
     titleLabel->setWordWrap(false);
 
@@ -240,48 +271,63 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const Track &track, int i
     artistLabel->setStyleSheet(
         "font-size: 13px;"
         "color: #888888;"
+        "background: transparent;"
     );
     artistLabel->setWordWrap(false);
 
-    infoLayout->addWidget(titleLabel);
-    infoLayout->addWidget(artistLabel);
+    titleArtistLayout->addWidget(titleLabel);
+    titleArtistLayout->addWidget(artistLabel);
 
-    // File size
-    QFileInfo fileInfo(track.filePath());
-    double sizeMB = fileInfo.size() / (1024.0 * 1024.0);
-    QLabel *sizeLabel = new QLabel(QString("%1 MB").arg(sizeMB, 0, 'f', 1));
-    sizeLabel->setStyleSheet(
+    // Date added column
+    QString dateText = formatDateAdded(track.dateAdded());
+    QLabel *dateLabel = new QLabel(dateText);
+    dateLabel->setFixedWidth(120);
+    dateLabel->setStyleSheet(
         "font-size: 13px;"
         "color: #666666;"
-        "padding: 5px;"
+        "background: transparent;"
     );
-    sizeLabel->setMinimumWidth(70);
+    dateLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
-    // Duration (placeholder for now)
-    QLabel *durationLabel = new QLabel("--:--");
+    // Duration column
+    QString durationText = formatDuration(track.duration());
+    QLabel *durationLabel = new QLabel(durationText);
+    durationLabel->setFixedWidth(80);
+    durationLabel->setAlignment(Qt::AlignCenter);
     durationLabel->setStyleSheet(
         "font-size: 13px;"
         "color: #666666;"
-        "padding: 5px;"
+        "background: transparent;"
     );
-    durationLabel->setMinimumWidth(50);
 
-    // Delete button with trash icon
-    QPushButton *deleteBtn = new QPushButton("✕");
-    deleteBtn->setFixedSize(36, 36);
+    // File size column
+    QString sizeText = formatFileSize(track.fileSize());
+    QLabel *sizeLabel = new QLabel(sizeText);
+    sizeLabel->setFixedWidth(100);
+    sizeLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    sizeLabel->setStyleSheet(
+        "font-size: 13px;"
+        "color: #666666;"
+        "background: transparent;"
+    );
+
+    // Delete button column with xButton.png (no circle border)
+    QPushButton *deleteBtn = new QPushButton();
+    deleteBtn->setFixedSize(40, 40);
+
+    // Set icon from resources (smaller to fit fully)
+    QPixmap xButtonIcon(":/images/src/resources/images/xButton.png");
+    QIcon xIcon(xButtonIcon);
+    deleteBtn->setIcon(xIcon);
+    deleteBtn->setIconSize(QSize(16, 16));
+
     deleteBtn->setStyleSheet(
         "QPushButton {"
         "   background-color: transparent;"
-        "   color: #999999;"
-        "   border: 1px solid #e0e0e0;"
-        "   border-radius: 18px;"
-        "   font-size: 18px;"
-        "   font-weight: bold;"
+        "   border: none;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #ff4444;"
-        "   color: white;"
-        "   border: 1px solid #ff4444;"
+        "   background-color: #ffdddd;"
         "}"
     );
     deleteBtn->setCursor(Qt::PointingHandCursor);
@@ -290,33 +336,14 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const Track &track, int i
         onDeleteButtonClicked(track.filePath());
     });
 
-    // Simple play button
-    QPushButton *playBtn = new QPushButton("▶");
-    playBtn->setFixedSize(42, 42);
-    playBtn->setStyleSheet(
-        "QPushButton {"
-        "   background-color: #000000;"
-        "   color: #FFFFFF;"
-        "   border: none;"
-        "   border-radius: 21px;"
-        "   font-size: 16px;"
-        "}"
-        "QPushButton:hover {"
-        "   background-color: #333333;"
-        "}"
-    );
-    playBtn->setCursor(Qt::PointingHandCursor);
-    connect(playBtn, &QPushButton::clicked, this, [this, index]() {
-        onPlayButtonClicked(index);
-    });
-
-    layout->addWidget(dragHandle);
-    layout->addWidget(iconLabel);
-    layout->addLayout(infoLayout, 1);
-    layout->addWidget(sizeLabel);
+    // Build layout
+    layout->addWidget(playWidget);
+    layout->addWidget(albumArtLabel);
+    layout->addWidget(titleArtistWidget, 1); // Stretch factor 1
+    layout->addWidget(dateLabel);
     layout->addWidget(durationLabel);
+    layout->addWidget(sizeLabel);
     layout->addWidget(deleteBtn);
-    layout->addWidget(playBtn);
 
     return widget;
 }
@@ -402,3 +429,52 @@ void DownloadedSongsPage::onRefreshButtonClicked()
                               .arg(totalSizeMB, 0, 'f', 1));
     });
 }
+
+QString DownloadedSongsPage::formatDateAdded(const QDateTime &dateTime) const
+{
+    if (!dateTime.isValid()) {
+        return "Unknown";
+    }
+
+    QDate today = QDate::currentDate();
+    QDate addedDate = dateTime.date();
+
+    if (addedDate == today) {
+        return "Today";
+    } else if (addedDate == today.addDays(-1)) {
+        return "Yesterday";
+    } else {
+        return addedDate.toString("MMM d, yyyy");
+    }
+}
+
+QString DownloadedSongsPage::formatFileSize(qint64 bytes) const
+{
+    if (bytes <= 0) {
+        return "0 MB";
+    }
+
+    double mb = bytes / (1024.0 * 1024.0);
+    if (mb < 10.0) {
+        return QString::number(mb, 'f', 1) + " MB";
+    } else {
+        return QString::number(mb, 'f', 0) + " MB";
+    }
+}
+
+QString DownloadedSongsPage::formatDuration(qint64 milliseconds) const
+{
+    if (milliseconds <= 0) {
+        return "--:--";
+    }
+
+    int seconds = milliseconds / 1000;
+    int minutes = seconds / 60;
+    seconds = seconds % 60;
+
+    return QString("%1:%2")
+        .arg(minutes)
+        .arg(seconds, 2, 10, QChar('0'));
+}
+
+// Animation now handled by QMovie with GIF, so this function is no longer needed

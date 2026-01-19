@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include "likedsongs.h"
 #include "searchpage.h"
 #include "downloadedpage.h"
 #include "playerwidget.h"
@@ -13,8 +12,8 @@ MainWindow::MainWindow(QWidget *parent)
     resize(1200, 800);
     setWindowTitle("EKNMusic");
 
-    // Show Liked Songs by default
-    showLikedSongs();
+    // Show Search page by default
+    showSearch();
 }
 
 MainWindow::~MainWindow()
@@ -44,32 +43,29 @@ void MainWindow::createSidebar()
     sidebarLayout->setSpacing(15);
     sidebarLayout->setContentsMargins(20, 30, 20, 30);
 
-    // Logo with image
+    // Logo with image (increased by 50%: 100 -> 150)
     logoLabel = new QLabel(sidebar);
     logoLabel->setObjectName("logo");
     logoLabel->setAlignment(Qt::AlignCenter);
-    QPixmap logo(":/resources/images/photo_2025-12-09_23-12-39.png");
+    QPixmap logo(":/images/src/resources/images/logo.png");
     if (!logo.isNull()) {
-        logoLabel->setPixmap(logo.scaled(120, 120, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        logoLabel->setPixmap(logo.scaled(150, 150, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     } else {
         logoLabel->setText("♫ EKNMUSIC");
-        logoLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #000000;");
+        logoLabel->setStyleSheet("font-size: 36px; font-weight: bold; color: #000000;");
     }
-    logoLabel->setStyleSheet("margin-bottom: 30px;");
+    logoLabel->setStyleSheet("margin-bottom: 20px;");
 
-    // Navigation buttons
-    likedSongsBtn = createNavButton("♥ Liked Songs", "♥");
+    // Navigation buttons (removed Liked Songs)
     searchBtn = createNavButton("🔍 Search", "🔍");
     downloadedBtn = createNavButton("⬇ Downloads", "⬇");
 
     // Connect signals
-    connect(likedSongsBtn, &QPushButton::clicked, this, &MainWindow::showLikedSongs);
     connect(searchBtn, &QPushButton::clicked, this, &MainWindow::showSearch);
     connect(downloadedBtn, &QPushButton::clicked, this, &MainWindow::showDownloaded);
 
     // Add widgets to sidebar
     sidebarLayout->addWidget(logoLabel);
-    sidebarLayout->addWidget(likedSongsBtn);
     sidebarLayout->addWidget(searchBtn);
     sidebarLayout->addWidget(downloadedBtn);
     sidebarLayout->addStretch();
@@ -89,13 +85,11 @@ void MainWindow::createContent()
     // Create stacked widget for pages
     stackedWidget = new QStackedWidget(contentArea);
 
-    // Create pages
-    likedSongsPage = new LikedSongsPage(stackedWidget);
+    // Create pages (removed Liked Songs)
     searchPage = new SearchPage(stackedWidget);
     downloadedPage = new DownloadedSongsPage(stackedWidget);
 
     // Add pages to stacked widget
-    stackedWidget->addWidget(likedSongsPage);
     stackedWidget->addWidget(searchPage);
     stackedWidget->addWidget(downloadedPage);
 
@@ -152,32 +146,13 @@ QPushButton* MainWindow::createNavButton(const QString &text, const QString &ico
     return button;
 }
 
-void MainWindow::showLikedSongs()
-{
-    stackedWidget->setCurrentWidget(likedSongsPage);
-    likedSongsBtn->setProperty("active", true);
-    searchBtn->setProperty("active", false);
-    downloadedBtn->setProperty("active", false);
-
-    // Refresh styles
-    likedSongsBtn->style()->unpolish(likedSongsBtn);
-    likedSongsBtn->style()->polish(likedSongsBtn);
-    searchBtn->style()->unpolish(searchBtn);
-    searchBtn->style()->polish(searchBtn);
-    downloadedBtn->style()->unpolish(downloadedBtn);
-    downloadedBtn->style()->polish(downloadedBtn);
-}
-
 void MainWindow::showSearch()
 {
     stackedWidget->setCurrentWidget(searchPage);
-    likedSongsBtn->setProperty("active", false);
     searchBtn->setProperty("active", true);
     downloadedBtn->setProperty("active", false);
 
     // Refresh styles
-    likedSongsBtn->style()->unpolish(likedSongsBtn);
-    likedSongsBtn->style()->polish(likedSongsBtn);
     searchBtn->style()->unpolish(searchBtn);
     searchBtn->style()->polish(searchBtn);
     downloadedBtn->style()->unpolish(downloadedBtn);
@@ -187,13 +162,10 @@ void MainWindow::showSearch()
 void MainWindow::showDownloaded()
 {
     stackedWidget->setCurrentWidget(downloadedPage);
-    likedSongsBtn->setProperty("active", false);
     searchBtn->setProperty("active", false);
     downloadedBtn->setProperty("active", true);
 
     // Refresh styles
-    likedSongsBtn->style()->unpolish(likedSongsBtn);
-    likedSongsBtn->style()->polish(likedSongsBtn);
     searchBtn->style()->unpolish(searchBtn);
     searchBtn->style()->polish(searchBtn);
     downloadedBtn->style()->unpolish(downloadedBtn);

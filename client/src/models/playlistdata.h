@@ -5,6 +5,7 @@
 #include <QList>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QDateTime>
 
 struct TrackData
 {
@@ -14,6 +15,8 @@ struct TrackData
     QString album;
     qint64 duration;
     int orderIndex; // Position in the playlist
+    QDateTime dateAdded;
+    qint64 fileSize; // in bytes
 
     // Serialization
     QJsonObject toJson() const;

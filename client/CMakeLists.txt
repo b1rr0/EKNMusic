@@ -65,7 +65,7 @@ set(UI_FILES
 )
 
 set(RESOURCES
-    # resources.qrc
+    resources.qrc
 )
 
 # Platform-specific settings

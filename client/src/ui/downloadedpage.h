@@ -39,6 +39,12 @@ private:
     MusicStorageService *musicStorage;
     PlayerService *playerService;
     QList<Track> downloadedTracks;
+
+    QString m_currentPlayingFile;
+
+    QString formatDateAdded(const QDateTime &dateTime) const;
+    QString formatFileSize(qint64 bytes) const;
+    QString formatDuration(qint64 milliseconds) const;
 };
 
 #endif // DOWNLOADEDPAGE_H

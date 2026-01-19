@@ -247,6 +247,12 @@ void PlayerPage::setupPlayerConnections()
 
     // Initialize volume from player service
     volumeSlider->setValue(playerService->volume());
+
+    // IMPORTANT: Load current track if it exists when player page opens
+    Track currentTrack = playerService->currentTrack();
+    if (currentTrack.isValid()) {
+        onTrackChanged(currentTrack);
+    }
 }
 
 void PlayerPage::onPlayPauseClicked()
@@ -335,13 +341,19 @@ void PlayerPage::onTrackChanged(const Track &track)
     songArtistLabel->setText(track.artist());
 
     // Load album art if available
-    QString artPath = track.albumArtPath();
-    if (!artPath.isEmpty() && QFile::exists(artPath)) {
-        qDebug() << "[PlayerPage] Loading album art from:" << artPath;
-        QPixmap albumArt(artPath);
+    // First try to use the QPixmap directly from track
+    if (!track.albumArt().isNull()) {
+        qDebug() << "[PlayerPage] Loading album art from QPixmap";
+        albumArtLabel->setPixmap(track.albumArt().scaled(400, 400, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        qDebug() << "[PlayerPage] Album art loaded successfully from QPixmap";
+    }
+    // Fallback to loading from file path
+    else if (!track.albumArtPath().isEmpty() && QFile::exists(track.albumArtPath())) {
+        qDebug() << "[PlayerPage] Loading album art from:" << track.albumArtPath();
+        QPixmap albumArt(track.albumArtPath());
         if (!albumArt.isNull()) {
             albumArtLabel->setPixmap(albumArt.scaled(400, 400, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-            qDebug() << "[PlayerPage] Album art loaded successfully";
+            qDebug() << "[PlayerPage] Album art loaded successfully from file";
         }
     } else {
         qDebug() << "[PlayerPage] No album art available";

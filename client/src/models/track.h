@@ -4,6 +4,7 @@
 #include <QString>
 #include <QUrl>
 #include <QPixmap>
+#include <QDateTime>
 
 class Track
 {
@@ -23,6 +24,8 @@ public:
     bool isLiked() const { return m_isLiked; }
     QString albumArtPath() const { return m_albumArtPath; }
     QPixmap albumArt() const { return m_albumArt; }
+    QDateTime dateAdded() const { return m_dateAdded; }
+    qint64 fileSize() const { return m_fileSize; }
 
     // Setters
     void setFilePath(const QString &path) { m_filePath = path; }
@@ -33,6 +36,8 @@ public:
     void setLiked(bool liked) { m_isLiked = liked; }
     void setAlbumArtPath(const QString &path) { m_albumArtPath = path; }
     void setAlbumArt(const QPixmap &pixmap) { m_albumArt = pixmap; }
+    void setDateAdded(const QDateTime &dt) { m_dateAdded = dt; }
+    void setFileSize(qint64 size) { m_fileSize = size; }
 
     // Helper methods
     QString formattedDuration() const;
@@ -47,6 +52,8 @@ private:
     bool m_isLiked;
     QString m_albumArtPath;
     QPixmap m_albumArt;
+    QDateTime m_dateAdded;
+    qint64 m_fileSize; // in bytes
 };
 
 #endif // TRACK_H

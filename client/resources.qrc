@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/fonts">
+        <file>src/resources/fonts/animeace2_reg.otf</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>src/resources/images/playButton.png</file>
+        <file>src/resources/images/songAnimation.gif</file>
+        <file>src/resources/images/background.png</file>
+        <file>src/resources/images/logo.png</file>
+        <file>src/resources/images/xButton.png</file>
+    </qresource>
+</RCC>

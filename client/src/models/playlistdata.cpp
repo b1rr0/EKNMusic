@@ -13,6 +13,8 @@ QJsonObject TrackData::toJson() const
     obj["album"] = album;
     obj["duration"] = duration;
     obj["orderIndex"] = orderIndex;
+    obj["dateAdded"] = dateAdded.toString(Qt::ISODate);
+    obj["fileSize"] = fileSize;
     return obj;
 }
 
@@ -25,6 +27,8 @@ TrackData TrackData::fromJson(const QJsonObject &json)
     data.album = json["album"].toString();
     data.duration = json["duration"].toInteger();
     data.orderIndex = json["orderIndex"].toInt();
+    data.dateAdded = QDateTime::fromString(json["dateAdded"].toString(), Qt::ISODate);
+    data.fileSize = json["fileSize"].toVariant().toLongLong();
     return data;
 }
 

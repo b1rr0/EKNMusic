@@ -110,8 +110,16 @@ Track MetadataExtractor::extractMetadata(const QString &filePath)
     // Create track with extracted metadata
     Track track(filePath, title, artist, album, duration);
 
+    // Set file size and date added
+    track.setFileSize(fileInfo.size());
+    track.setDateAdded(fileInfo.lastModified());
+
     // Save album art if extracted
     if (!m_albumArt.isNull()) {
+        // IMPORTANT: Set the QPixmap directly for immediate use
+        track.setAlbumArt(m_albumArt);
+
+        // Also save to file for future use
         QString albumArtPath = fileInfo.absolutePath() + "/." +
                                fileInfo.completeBaseName() + "_cover.jpg";
         if (m_albumArt.save(albumArtPath, "JPEG", 90)) {
@@ -125,7 +133,13 @@ Track MetadataExtractor::extractMetadata(const QString &filePath)
 
         QStringList imageFiles = dir.entryList(imageFilters, QDir::Files);
         if (!imageFiles.isEmpty()) {
-            track.setAlbumArtPath(dir.absoluteFilePath(imageFiles.first()));
+            QString artPath = dir.absoluteFilePath(imageFiles.first());
+            track.setAlbumArtPath(artPath);
+            // Load and set the pixmap
+            QPixmap coverArt(artPath);
+            if (!coverArt.isNull()) {
+                track.setAlbumArt(coverArt);
+            }
         }
     }
 

@@ -102,6 +102,12 @@ QList<Track> MusicStorageService::getDownloadedTracks()
             if (!data.album.isEmpty()) {
                 track.setAlbum(data.album);
             }
+            if (data.dateAdded.isValid()) {
+                track.setDateAdded(data.dateAdded);
+            }
+            if (data.fileSize > 0) {
+                track.setFileSize(data.fileSize);
+            }
             tracks.append(track);
             filePathToTrack.remove(data.filePath);
         }
@@ -197,6 +203,15 @@ bool MusicStorageService::saveTrack(const QString &sourceFilePath,
 
 bool MusicStorageService::deleteTrack(const QString &filePath)
 {
+    // Also delete the album art file if it exists
+    QFileInfo fileInfo(filePath);
+    QString albumArtPath = fileInfo.absolutePath() + "/." +
+                           fileInfo.completeBaseName() + "_cover.jpg";
+
+    // Remove album art file (silently fail if doesn't exist)
+    QFile::remove(albumArtPath);
+
+    // Remove the main track file
     bool success = QFile::remove(filePath);
 
     if (success) {
@@ -253,6 +268,8 @@ void MusicStorageService::updateTrackMetadata(const QString &filePath, const Tra
     data.artist = track.artist();
     data.album = track.album();
     data.duration = track.duration();
+    data.dateAdded = track.dateAdded();
+    data.fileSize = track.fileSize();
 
     // Preserve existing order index if available
     if (m_playlistData.hasTrackData(filePath)) {
