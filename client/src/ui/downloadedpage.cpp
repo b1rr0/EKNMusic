@@ -17,6 +17,10 @@ DownloadedSongsPage::DownloadedSongsPage(QWidget *parent)
     // Connect to music storage changes
     connect(musicStorage, &MusicStorageService::tracksChanged,
             this, &DownloadedSongsPage::refreshSongList);
+
+    // Connect to player service track changes
+    connect(playerService, &PlayerService::trackChanged,
+            this, &DownloadedSongsPage::onTrackChanged);
 }
 
 DownloadedSongsPage::~DownloadedSongsPage()
@@ -475,6 +479,15 @@ QString DownloadedSongsPage::formatDuration(qint64 milliseconds) const
     return QString("%1:%2")
         .arg(minutes)
         .arg(seconds, 2, 10, QChar('0'));
+}
+
+void DownloadedSongsPage::onTrackChanged(const Track &track)
+{
+    // Update the current playing file path
+    m_currentPlayingFile = track.filePath();
+
+    // Refresh the list to update visual indicators (playing animation)
+    refreshSongList();
 }
 
 // Animation now handled by QMovie with GIF, so this function is no longer needed

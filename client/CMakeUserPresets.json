@@ -1,0 +1,35 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "qt-creator-debug",
+            "displayName": "Qt Creator Debug",
+            "description": "Debug build configured by Qt Creator",
+            "inherits": "mingw-debug",
+            "binaryDir": "${sourceDir}/build/Desktop_Qt_6_10_1_MinGW_64_bit-Debug",
+            "cacheVariables": {
+                "QT_CREATOR_SKIP_VCPKG_SETUP": "ON",
+                "QT_CREATOR_SKIP_CONAN_SETUP": "ON",
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "type": "STRING",
+                    "value": ""
+                }
+            }
+        },
+        {
+            "name": "qt-creator-release",
+            "displayName": "Qt Creator Release",
+            "description": "Release build configured by Qt Creator",
+            "inherits": "mingw-release",
+            "binaryDir": "${sourceDir}/build/Desktop_Qt_6_10_1_MinGW_64_bit-Release",
+            "cacheVariables": {
+                "QT_CREATOR_SKIP_VCPKG_SETUP": "ON",
+                "QT_CREATOR_SKIP_CONAN_SETUP": "ON",
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "type": "STRING",
+                    "value": ""
+                }
+            }
+        }
+    ]
+}

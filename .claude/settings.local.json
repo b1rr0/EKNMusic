@@ -27,7 +27,30 @@
       "Bash(mingw32-make:*)",
       "Bash(\"/d/programs/Tools/mingw1310_64/bin/mingw32-make.exe\" -j2)",
       "Bash(start EKNMusic.exe)",
-      "Bash(explorer \"D:\\\\programs\\\\EKNMusic\\\\client\\\\platform\\\\windows\")"
+      "Bash(explorer \"D:\\\\programs\\\\EKNMusic\\\\client\\\\platform\\\\windows\")",
+      "Bash(if [ -d \"build\" ])",
+      "Bash(then rm -rf build)",
+      "Bash(fi)",
+      "Bash(if [ -d \".qtc_clangd\" ])",
+      "Bash(then rm -rf .qtc_clangd)",
+      "Bash(if [ -d \"cmake-build-debug\" ])",
+      "Bash(then rm -rf cmake-build-debug)",
+      "Bash(\"D:\\\\programs\\\\Tools\\\\CMake_64\\\\bin\\\\cmake.exe\" --preset mingw-debug)",
+      "Bash(\"D:\\\\programs\\\\Tools\\\\CMake_64\\\\bin\\\\cmake.exe\" --build build --config Debug)",
+      "Bash(export PATH=\"D:/programs/Tools/mingw1310_64/bin:$PATH\")",
+      "Bash(\"D:\\\\programs\\\\Tools\\\\CMake_64\\\\bin\\\\cmake.exe\" --build build --config Debug --clean-first)",
+      "Bash(\"D:\\\\programs\\\\6.10.1\\\\mingw_64\\\\bin\\\\windeployqt.exe\" EKNMusic.exe --no-translations)",
+      "Bash(if exist build rmdir /s /q build)",
+      "Bash(cmd /c \"if exist build rmdir /s /q build\")",
+      "Bash(cmd /c \"del /q .qtcreator\\\\CMakeLists.txt.user 2>nul\")",
+      "Bash(cmd /c \"dir D:\\\\programs\\\\Tools\\\\mingw1310_64\\\\bin\\\\mingw32-make.exe\")",
+      "Bash(cmd /c \"dir D:\\\\programs\\\\Tools\\\\mingw1310_64\\\\bin\\\\*.exe | findstr make\")",
+      "Bash(cmd /c \"where cmake\")",
+      "Bash(\"D:/programs/Tools/CMake_64/bin/cmake.exe\" --version)",
+      "Bash(\"D:/programs/Tools/CMake_64/bin/cmake.exe\" --preset mingw-debug)",
+      "Bash(cmd /c:*)",
+      "Bash(\"D:/programs/Tools/CMake_64/bin/cmake.exe\" --list-presets)",
+      "Bash(\"D:/programs/Tools/CMake_64/bin/cmake.exe\":*)"
     ]
   }
 }

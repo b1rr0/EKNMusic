@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(EKNMusic VERSION 1.0.0 LANGUAGES CXX)
+# Set RC compiler before project() call on Windows
+if(WIN32)
+    set(CMAKE_RC_COMPILER "D:/programs/Tools/mingw1310_64/bin/windres.exe" CACHE FILEPATH "RC Compiler")
+endif()
+
+project(EKNMusic VERSION 1.0.0 LANGUAGES CXX RC)
 
 # C++ Standard
 set(CMAKE_CXX_STANDARD 17)

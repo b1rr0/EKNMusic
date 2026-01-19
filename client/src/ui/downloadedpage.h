@@ -25,6 +25,7 @@ private slots:
     void onDeleteButtonClicked(const QString &filePath);
     void onSongOrderChanged();
     void onRefreshButtonClicked();
+    void onTrackChanged(const Track &track);
 
 private:
     void setupUI();
