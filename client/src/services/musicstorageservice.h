@@ -6,6 +6,7 @@
 #include <QList>
 #include <QDir>
 #include "models/track.h"
+#include "models/playlistdata.h"
 
 class MusicStorageService : public QObject
 {
@@ -26,6 +27,13 @@ public:
     // Metadata
     Track extractMetadataFromFile(const QString &filePath);
 
+    // Playlist data (order and custom metadata)
+    void savePlaylistData();
+    void loadPlaylistData();
+    void updateTrackOrder(const QList<QString> &orderedFilePaths);
+    void updateTrackMetadata(const QString &filePath, const Track &track);
+    QString playlistDataFilePath() const;
+
 signals:
     void tracksChanged();
 
@@ -40,6 +48,7 @@ private:
 
     static MusicStorageService *s_instance;
     QString m_musicDirectory;
+    PlaylistData m_playlistData;
 };
 
 #endif // MUSICSTORAGESERVICE_H

@@ -3,6 +3,7 @@
 #include <QPushButton>
 #include <QHBoxLayout>
 #include <QFileInfo>
+#include <QTimer>
 
 DownloadedSongsPage::DownloadedSongsPage(QWidget *parent)
     : QWidget(parent)
@@ -34,6 +35,9 @@ void DownloadedSongsPage::setupUI()
         "}"
     );
 
+    // Header layout with title and refresh button
+    QHBoxLayout *headerLayout = new QHBoxLayout();
+
     // Simple title
     titleLabel = new QLabel("Downloaded Songs", this);
     titleLabel->setStyleSheet(
@@ -43,6 +47,35 @@ void DownloadedSongsPage::setupUI()
         "margin-bottom: 5px;"
     );
 
+    // Refresh button
+    QPushButton *refreshBtn = new QPushButton("⟳");
+    refreshBtn->setFixedSize(40, 40);
+    refreshBtn->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #f0f0f0;"
+        "   color: #333333;"
+        "   border: 1px solid #d0d0d0;"
+        "   border-radius: 20px;"
+        "   font-size: 24px;"
+        "   font-weight: bold;"
+        "}"
+        "QPushButton:hover {"
+        "   background-color: #4a9eff;"
+        "   color: white;"
+        "   border: 1px solid #4a9eff;"
+        "}"
+        "QPushButton:pressed {"
+        "   background-color: #3080dd;"
+        "}"
+    );
+    refreshBtn->setCursor(Qt::PointingHandCursor);
+    refreshBtn->setToolTip("Refresh song list from folder");
+    connect(refreshBtn, &QPushButton::clicked, this, &DownloadedSongsPage::onRefreshButtonClicked);
+
+    headerLayout->addWidget(titleLabel);
+    headerLayout->addStretch();
+    headerLayout->addWidget(refreshBtn);
+
     // Simple info label
     infoLabel = new QLabel("0 songs • 0 MB", this);
     infoLabel->setStyleSheet(
@@ -51,8 +84,14 @@ void DownloadedSongsPage::setupUI()
         "margin-bottom: 25px;"
     );
 
-    // Simple song list widget
+    // Simple song list widget with drag & drop
     songListWidget = new QListWidget(this);
+    songListWidget->setSpacing(12); // Add spacing between items
+    songListWidget->setDragEnabled(true);
+    songListWidget->setAcceptDrops(true);
+    songListWidget->setDropIndicatorShown(true);
+    songListWidget->setDragDropMode(QAbstractItemView::InternalMove);
+    songListWidget->setDefaultDropAction(Qt::MoveAction);
     songListWidget->setStyleSheet(
         "QListWidget {"
         "   background-color: transparent;"
@@ -61,36 +100,48 @@ void DownloadedSongsPage::setupUI()
         "}"
         "QListWidget::item {"
         "   background-color: white;"
-        "   padding: 12px;"
-        "   border-radius: 8px;"
-        "   margin-bottom: 10px;"
+        "   border-radius: 12px;"
         "   border: 1px solid #e0e0e0;"
         "}"
         "QListWidget::item:hover {"
         "   background-color: #fafafa;"
-        "   box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+        "   border: 1px solid #d0d0d0;"
+        "   cursor: move;"
         "}"
         "QListWidget::item:selected {"
-        "   background-color: #ecf0f1;"
-        "   border: 1px solid #bdc3c7;"
+        "   background-color: #e8f4fd;"
+        "   border: 2px solid #4a9eff;"
+        "}"
+        "QListWidget::item:selected:active {"
+        "   background-color: #d0e9ff;"
+        "   border: 2px dashed #4a9eff;"
         "}"
         "QScrollBar:vertical {"
         "   background: transparent;"
         "   width: 8px;"
+        "   margin: 0px;"
         "}"
         "QScrollBar::handle:vertical {"
         "   background: #bdc3c7;"
         "   border-radius: 4px;"
+        "   min-height: 30px;"
         "}"
         "QScrollBar::handle:vertical:hover {"
         "   background: #95a5a6;"
+        "}"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
+        "   height: 0px;"
         "}"
     );
 
     connect(songListWidget, &QListWidget::itemClicked, this, &DownloadedSongsPage::onSongItemClicked);
 
+    // Connect to model changed signal to detect reordering
+    connect(songListWidget->model(), &QAbstractItemModel::rowsMoved,
+            this, &DownloadedSongsPage::onSongOrderChanged);
+
     // Add to layout
-    mainLayout->addWidget(titleLabel);
+    mainLayout->addLayout(headerLayout);
     mainLayout->addWidget(infoLabel);
     mainLayout->addWidget(songListWidget);
 }
@@ -114,6 +165,9 @@ void DownloadedSongsPage::loadDownloadedSongs()
         item->setSizeHint(songWidget->sizeHint());
         songListWidget->setItemWidget(item, songWidget);
 
+        // IMPORTANT: Store the file path in item data so we can retrieve it after drag & drop
+        item->setData(Qt::UserRole, track.filePath());
+
         // Calculate total size
         QFileInfo fileInfo(track.filePath());
         totalSize += fileInfo.size();
@@ -133,12 +187,31 @@ void DownloadedSongsPage::refreshSongList()
 QWidget* DownloadedSongsPage::createDownloadedSongItem(const Track &track, int index)
 {
     QWidget *widget = new QWidget();
-    widget->setMinimumHeight(70);
+    widget->setMinimumHeight(80);
+    widget->setStyleSheet(
+        "QWidget {"
+        "   background-color: transparent;"
+        "   border-radius: 12px;"
+        "}"
+    );
     QHBoxLayout *layout = new QHBoxLayout(widget);
-    layout->setContentsMargins(15, 10, 15, 10);
+    layout->setContentsMargins(20, 15, 20, 15);
     layout->setSpacing(15);
 
-    // Simple download icon
+    // Drag handle icon
+    QLabel *dragHandle = new QLabel("⋮⋮");
+    dragHandle->setFixedSize(20, 36);
+    dragHandle->setAlignment(Qt::AlignCenter);
+    dragHandle->setStyleSheet(
+        "color: #cccccc;"
+        "font-size: 14px;"
+        "font-weight: bold;"
+        "background: transparent;"
+    );
+    dragHandle->setCursor(Qt::OpenHandCursor);
+    dragHandle->setToolTip("Drag to reorder");
+
+    // Music icon
     QLabel *iconLabel = new QLabel("♪");
     iconLabel->setFixedSize(36, 36);
     iconLabel->setAlignment(Qt::AlignCenter);
@@ -193,26 +266,28 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const Track &track, int i
     );
     durationLabel->setMinimumWidth(50);
 
-    // Simple delete button
-    QPushButton *deleteBtn = new QPushButton("🗑");
+    // Delete button with trash icon
+    QPushButton *deleteBtn = new QPushButton("✕");
     deleteBtn->setFixedSize(36, 36);
     deleteBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: white;"
-        "   color: #666666;"
-        "   border: 1px solid #d0d0d0;"
+        "   background-color: transparent;"
+        "   color: #999999;"
+        "   border: 1px solid #e0e0e0;"
         "   border-radius: 18px;"
-        "   font-size: 16px;"
+        "   font-size: 18px;"
+        "   font-weight: bold;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #f0f0f0;"
-        "   color: #333333;"
-        "   border: 1px solid #000000;"
+        "   background-color: #ff4444;"
+        "   color: white;"
+        "   border: 1px solid #ff4444;"
         "}"
     );
     deleteBtn->setCursor(Qt::PointingHandCursor);
-    connect(deleteBtn, &QPushButton::clicked, this, [this, index]() {
-        onDeleteButtonClicked(index);
+    deleteBtn->setToolTip("Delete song");
+    connect(deleteBtn, &QPushButton::clicked, this, [this, track]() {
+        onDeleteButtonClicked(track.filePath());
     });
 
     // Simple play button
@@ -235,6 +310,7 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const Track &track, int i
         onPlayButtonClicked(index);
     });
 
+    layout->addWidget(dragHandle);
     layout->addWidget(iconLabel);
     layout->addLayout(infoLayout, 1);
     layout->addWidget(sizeLabel);
@@ -264,11 +340,65 @@ void DownloadedSongsPage::onPlayButtonClicked(int index)
     }
 }
 
-void DownloadedSongsPage::onDeleteButtonClicked(int index)
+void DownloadedSongsPage::onDeleteButtonClicked(const QString &filePath)
 {
-    if (index >= 0 && index < downloadedTracks.size()) {
-        const Track &track = downloadedTracks[index];
-        musicStorage->deleteTrack(track.filePath());
+    if (!filePath.isEmpty()) {
+        // Delete the actual file from filesystem
+        musicStorage->deleteTrack(filePath);
         // List will be refreshed automatically via tracksChanged signal
     }
+}
+
+void DownloadedSongsPage::onSongOrderChanged()
+{
+    // The song order has been changed by drag and drop
+    qDebug() << "Song order changed - saving new order";
+
+    // Collect file paths in the NEW visual order (after drag & drop)
+    QList<QString> orderedFilePaths;
+
+    // Iterate through items in their current visual order
+    for (int i = 0; i < songListWidget->count(); ++i) {
+        QListWidgetItem *item = songListWidget->item(i);
+        if (item) {
+            // Retrieve the file path we stored in Qt::UserRole
+            QString filePath = item->data(Qt::UserRole).toString();
+            if (!filePath.isEmpty()) {
+                orderedFilePaths.append(filePath);
+                qDebug() << "  Position" << i << ":" << filePath;
+            }
+        }
+    }
+
+    // Update the order in storage (saves to JSON immediately)
+    musicStorage->updateTrackOrder(orderedFilePaths);
+
+    qDebug() << "New order saved to playlist.json with" << orderedFilePaths.size() << "tracks";
+}
+
+void DownloadedSongsPage::onRefreshButtonClicked()
+{
+    qDebug() << "Refreshing song list from folder...";
+
+    // Force refresh the list from the actual folder
+    // This will rescan the folder and pick up any new files
+    // or restore files that were previously deleted
+    refreshSongList();
+
+    // Show feedback to user
+    infoLabel->setText(infoLabel->text() + " • Refreshed!");
+
+    // Reset the text after 2 seconds
+    QTimer::singleShot(2000, this, [this]() {
+        // Recalculate the info
+        qint64 totalSize = 0;
+        for (const Track &track : downloadedTracks) {
+            QFileInfo fileInfo(track.filePath());
+            totalSize += fileInfo.size();
+        }
+        double totalSizeMB = totalSize / (1024.0 * 1024.0);
+        infoLabel->setText(QString("%1 songs • %2 MB")
+                              .arg(downloadedTracks.size())
+                              .arg(totalSizeMB, 0, 'f', 1));
+    });
 }

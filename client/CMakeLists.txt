@@ -38,8 +38,10 @@ set(SOURCES
     src/ui/playerwidget.cpp
     src/ui/playerpage.cpp
     src/models/track.cpp
+    src/models/playlistdata.cpp
     src/services/playerservice.cpp
     src/services/musicstorageservice.cpp
+    src/services/metadataextractor.cpp
 )
 
 set(HEADERS
@@ -51,8 +53,10 @@ set(HEADERS
     src/ui/playerwidget.h
     src/ui/playerpage.h
     src/models/track.h
+    src/models/playlistdata.h
     src/services/playerservice.h
     src/services/musicstorageservice.h
+    src/services/metadataextractor.h
 )
 
 set(UI_FILES

@@ -137,6 +137,11 @@ Comprehensive documentation available in the [docs/](docs/) directory:
 - [Database Schema](docs/database-schema.md) - Database design
 - [Deployment Guide](docs/deployment-guide.md) - Deployment instructions
 
+### Client Features Documentation
+
+- [Playlist Persistence](client/docs/PLAYLIST_PERSISTENCE.md) - How playlist order and metadata are saved
+- [Client Features Overview](client/docs/README.md) - Quick start guide for client features
+
 ## Technology Stack
 
 ### Backend
@@ -148,9 +153,15 @@ Comprehensive documentation available in the [docs/](docs/) directory:
 
 ### Desktop Client
 - **Language**: C++17/C++20
-- **Framework**: Qt 6.x
+- **Framework**: Qt 6.x (with Qt Multimedia)
 - **Build**: CMake
 - **Platforms**: Windows 10+, macOS 11+, Linux
+- **Features**:
+  - Drag & drop playlist reordering
+  - Automatic metadata extraction (ID3 tags, album art)
+  - Persistent playlist state (JSON-based)
+  - Audio playback with Qt Multimedia
+  - Supports: MP3, FLAC, WAV, OGG, M4A
 
 ## Development Workflow
 

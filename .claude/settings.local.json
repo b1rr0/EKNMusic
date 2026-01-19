@@ -18,7 +18,11 @@
       "Bash(cmake.exe:*)",
       "Bash(\"/d/programs/Tools/CMake_64/bin/cmake.exe\":*)",
       "Bash(\"/d/programs/Tools/CMake_64/bin/cmake.exe\" -C qtcsettings.cmake \"/d/programs/EKNMusic/client\")",
-      "Bash(\"/d/programs/Tools/CMake_64/bin/cmake.exe\" --build . --config Debug)"
+      "Bash(\"/d/programs/Tools/CMake_64/bin/cmake.exe\" --build . --config Debug)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill:*)",
+      "Bash(test:*)",
+      "Bash(start ./EKNMusic.exe)"
     ]
   }
 }

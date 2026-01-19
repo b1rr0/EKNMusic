@@ -22,7 +22,9 @@ public:
 private slots:
     void onSongItemClicked(QListWidgetItem *item);
     void onPlayButtonClicked(int index);
-    void onDeleteButtonClicked(int index);
+    void onDeleteButtonClicked(const QString &filePath);
+    void onSongOrderChanged();
+    void onRefreshButtonClicked();
 
 private:
     void setupUI();

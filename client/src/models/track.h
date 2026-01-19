@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QUrl>
+#include <QPixmap>
 
 class Track
 {
@@ -21,6 +22,7 @@ public:
     qint64 duration() const { return m_duration; } // in milliseconds
     bool isLiked() const { return m_isLiked; }
     QString albumArtPath() const { return m_albumArtPath; }
+    QPixmap albumArt() const { return m_albumArt; }
 
     // Setters
     void setFilePath(const QString &path) { m_filePath = path; }
@@ -30,6 +32,7 @@ public:
     void setDuration(qint64 duration) { m_duration = duration; }
     void setLiked(bool liked) { m_isLiked = liked; }
     void setAlbumArtPath(const QString &path) { m_albumArtPath = path; }
+    void setAlbumArt(const QPixmap &pixmap) { m_albumArt = pixmap; }
 
     // Helper methods
     QString formattedDuration() const;
@@ -43,6 +46,7 @@ private:
     qint64 m_duration; // in milliseconds
     bool m_isLiked;
     QString m_albumArtPath;
+    QPixmap m_albumArt;
 };
 
 #endif // TRACK_H
