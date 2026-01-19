@@ -50,7 +50,11 @@
       "Bash(\"D:/programs/Tools/CMake_64/bin/cmake.exe\" --preset mingw-debug)",
       "Bash(cmd /c:*)",
       "Bash(\"D:/programs/Tools/CMake_64/bin/cmake.exe\" --list-presets)",
-      "Bash(\"D:/programs/Tools/CMake_64/bin/cmake.exe\":*)"
+      "Bash(\"D:/programs/Tools/CMake_64/bin/cmake.exe\":*)",
+      "Bash(\"D:/programs/Tools/CMake_64/bin/cmake.exe\" --preset mingw-release)",
+      "Bash(\"D:/programs/Tools/CMake_64/bin/cmake.exe\" --build build-release --config Release)",
+      "Bash(\"D:/programs/6.10.1/mingw_64/bin/windeployqt.exe\" --release --no-translations \"D:\\\\programs\\\\EKNMusic\\\\client\\\\build-release\\\\EKNMusic.exe\")",
+      "Bash(\"C:/Program Files \\(x86\\)/Inno Setup 6/ISCC.exe\" \"D:\\\\programs\\\\EKNMusic\\\\installer\\\\setup.iss\")"
     ]
   }
 }
