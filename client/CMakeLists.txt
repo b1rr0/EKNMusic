@@ -12,6 +12,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+# Set Qt6 path - adjust this to your Qt installation
+if(WIN32)
+    set(CMAKE_PREFIX_PATH "D:/programs/6.10.1/mingw_64")
+endif()
+
 # Find Qt6
 find_package(Qt6 REQUIRED COMPONENTS
     Core
@@ -25,11 +30,17 @@ find_package(Qt6 REQUIRED COMPONENTS
 include_directories(
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_BINARY_DIR}
+    ${Qt6Core_INCLUDE_DIRS}
+    ${Qt6Widgets_INCLUDE_DIRS}
+    ${Qt6Network_INCLUDE_DIRS}
+    ${Qt6Sql_INCLUDE_DIRS}
+    ${Qt6Multimedia_INCLUDE_DIRS}
 )
 
 # Source files
 set(SOURCES
     src/main.cpp
+    src/config/appconfig.cpp
     src/ui/loginwindow.cpp
     src/ui/mainwindow.cpp
     src/ui/likedsongs.cpp
@@ -46,6 +57,7 @@ set(SOURCES
 )
 
 set(HEADERS
+    src/config/appconfig.h
     src/ui/loginwindow.h
     src/ui/mainwindow.h
     src/ui/likedsongs.h
