@@ -72,10 +72,9 @@ set(RESOURCES
 
 # Platform-specific settings
 if(WIN32)
-    # Windows specific settings
-    # TODO: Add app icon in future iterations
-    # set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_SOURCE_DIR}/platform/windows/app.rc")
-    # set(SOURCES ${SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
+    # Windows specific settings - App icon
+    set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_SOURCE_DIR}/platform/windows/app.rc")
+    set(SOURCES ${SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
 
     # Enable console for debug builds on Windows
     if(CMAKE_BUILD_TYPE MATCHES Debug)

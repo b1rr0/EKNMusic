@@ -251,6 +251,9 @@ void MainWindow::switchToSongsMode()
     // Hide RADIO navigation buttons
     eknmIntercomBtn->setVisible(false);
 
+    // Show player widget for SONGS mode
+    playerWidget->setVisible(true);
+
     // Show search page by default
     showSearch();
 }
@@ -269,6 +272,9 @@ void MainWindow::switchToRadioMode()
 
     // Show RADIO navigation buttons
     eknmIntercomBtn->setVisible(true);
+
+    // Hide player widget for RADIO mode (radio has its own player)
+    playerWidget->setVisible(false);
 
     // Show radio page by default
     showRadio();

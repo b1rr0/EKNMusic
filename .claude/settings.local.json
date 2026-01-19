@@ -26,7 +26,8 @@
       "Bash(dir:*)",
       "Bash(mingw32-make:*)",
       "Bash(\"/d/programs/Tools/mingw1310_64/bin/mingw32-make.exe\" -j2)",
-      "Bash(start EKNMusic.exe)"
+      "Bash(start EKNMusic.exe)",
+      "Bash(explorer \"D:\\\\programs\\\\EKNMusic\\\\client\\\\platform\\\\windows\")"
     ]
   }
 }

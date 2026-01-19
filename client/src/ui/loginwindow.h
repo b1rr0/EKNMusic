@@ -8,7 +8,7 @@
 #include <QCheckBox>
 #include <QVBoxLayout>
 
-class LoginWindow : public QWidget
+class  : public QWidget
 {
     Q_OBJECT
 
