@@ -18,14 +18,8 @@ find_package(Qt6 REQUIRED COMPONENTS
     Widgets
     Network
     Sql
+    Multimedia
 )
-
-# Optional Qt modules (uncomment if needed)
-# find_package(Qt6 COMPONENTS
-#     Multimedia
-#     MultimediaWidgets
-#     WebSockets
-# )
 
 # Include directories
 include_directories(
@@ -42,6 +36,10 @@ set(SOURCES
     src/ui/searchpage.cpp
     src/ui/downloadedpage.cpp
     src/ui/playerwidget.cpp
+    src/ui/playerpage.cpp
+    src/models/track.cpp
+    src/services/playerservice.cpp
+    src/services/musicstorageservice.cpp
 )
 
 set(HEADERS
@@ -51,6 +49,10 @@ set(HEADERS
     src/ui/searchpage.h
     src/ui/downloadedpage.h
     src/ui/playerwidget.h
+    src/ui/playerpage.h
+    src/models/track.h
+    src/services/playerservice.h
+    src/services/musicstorageservice.h
 )
 
 set(UI_FILES
@@ -130,14 +132,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Widgets
     Qt6::Network
     Qt6::Sql
+    Qt6::Multimedia
 )
-
-# Optional libraries (uncomment if needed)
-# target_link_libraries(${PROJECT_NAME} PRIVATE
-#     Qt6::Multimedia
-#     Qt6::MultimediaWidgets
-#     Qt6::WebSockets
-# )
 
 # Platform-specific libraries
 if(WIN32)

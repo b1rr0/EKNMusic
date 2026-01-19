@@ -1,27 +1,24 @@
-#ifndef PLAYERWIDGET_H
-#define PLAYERWIDGET_H
+#ifndef PLAYERPAGE_H
+#define PLAYERPAGE_H
 
 #include <QWidget>
-#include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QSlider>
-#include <QStyle>
 #include <QMediaPlayer>
+#include <QStyle>
 #include "services/playerservice.h"
 #include "models/track.h"
 
-class PlayerWidget : public QWidget
+class PlayerPage : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit PlayerWidget(QWidget *parent = nullptr);
-    ~PlayerWidget();
-
-protected:
-    bool eventFilter(QObject *obj, QEvent *event) override;
+    explicit PlayerPage(QWidget *parent = nullptr);
+    ~PlayerPage();
 
 private slots:
     void onPlayPauseClicked();
@@ -29,9 +26,10 @@ private slots:
     void onNextClicked();
     void onShuffleClicked();
     void onRepeatClicked();
+    void onLikeClicked();
     void onProgressChanged(int value);
     void onVolumeChanged(int value);
-    void onAlbumArtClicked();
+    void onBackClicked();
 
     // PlayerService slots
     void onTrackChanged(const Track &track);
@@ -43,36 +41,40 @@ private:
     void setupUI();
     void applyStyles();
     void setupPlayerConnections();
-    QPushButton* createControlButton(const QString &icon, int size = 32);
+    QPushButton* createControlButton(const QString &icon, int size);
     QString formatTime(qint64 milliseconds) const;
 
     // Layout
-    QHBoxLayout *mainLayout;
+    QVBoxLayout *mainLayout;
+    QPushButton *backButton;
 
-    // Left section (Song info)
-    QWidget *songInfoWidget;
-    QHBoxLayout *songInfoLayout;
+    // Album art (large)
     QLabel *albumArtLabel;
+
+    // Track info
     QLabel *songTitleLabel;
     QLabel *songArtistLabel;
-    QPushButton *likeButton;
 
-    // Center section (Player controls)
+    // Controls
     QWidget *controlsWidget;
-    QVBoxLayout *controlsLayout;
-    QHBoxLayout *buttonsLayout;
+    QHBoxLayout *controlButtonsLayout;
     QPushButton *shuffleButton;
     QPushButton *previousButton;
     QPushButton *playPauseButton;
     QPushButton *nextButton;
     QPushButton *repeatButton;
-    QSlider *progressSlider;
+
+    // Progress bar
+    QWidget *progressWidget;
+    QHBoxLayout *progressLayout;
     QLabel *currentTimeLabel;
+    QSlider *progressSlider;
     QLabel *totalTimeLabel;
 
-    // Right section (Volume)
-    QWidget *volumeWidget;
-    QHBoxLayout *volumeLayout;
+    // Additional controls
+    QWidget *additionalControlsWidget;
+    QHBoxLayout *additionalControlsLayout;
+    QPushButton *likeButton;
     QPushButton *volumeButton;
     QSlider *volumeSlider;
 
@@ -80,10 +82,11 @@ private:
     bool isPlaying;
     bool isShuffle;
     bool isRepeat;
+    bool isLiked;
     bool isSeekingByUser;
 
     // Player service reference
     PlayerService *playerService;
 };
 
-#endif // PLAYERWIDGET_H
+#endif // PLAYERPAGE_H

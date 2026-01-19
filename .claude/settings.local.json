@@ -9,7 +9,16 @@
       "Bash(where:*)",
       "Bash(powershell -Command \"Start-Process msiexec.exe -ArgumentList ''/i C:\\\\Temp\\\\cmake-installer.msi /quiet ADD_CMAKE_TO_PATH=System'' -Wait -NoNewWindow\")",
       "Bash(powershell -Command \"Invoke-WebRequest -Uri ''https://aka.ms/vs/17/release/vs_buildtools.exe'' -OutFile ''C:\\\\Temp\\\\vs_buildtools.exe''\")",
-      "Bash(cmake --build:*)"
+      "Bash(cmake --build:*)",
+      "Bash(vcpkg install:*)",
+      "Bash(./bootstrap-vcpkg.bat)",
+      "Bash(./vcpkg install:*)",
+      "Bash(.vcpkg list:*)",
+      "Bash(findstr:*)",
+      "Bash(cmake.exe:*)",
+      "Bash(\"/d/programs/Tools/CMake_64/bin/cmake.exe\":*)",
+      "Bash(\"/d/programs/Tools/CMake_64/bin/cmake.exe\" -C qtcsettings.cmake \"/d/programs/EKNMusic/client\")",
+      "Bash(\"/d/programs/Tools/CMake_64/bin/cmake.exe\" --build . --config Debug)"
     ]
   }
 }

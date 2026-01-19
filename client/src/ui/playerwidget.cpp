@@ -1,13 +1,23 @@
 #include "playerwidget.h"
+#include "playerpage.h"
+#include <QPixmap>
+#include <QStackedWidget>
+#include <QEvent>
+#include <QMouseEvent>
+#include <QFile>
+#include <QDebug>
 
 PlayerWidget::PlayerWidget(QWidget *parent)
     : QWidget(parent)
     , isPlaying(false)
     , isShuffle(false)
     , isRepeat(false)
+    , isSeekingByUser(false)
+    , playerService(PlayerService::instance())
 {
     setupUI();
     applyStyles();
+    setupPlayerConnections();
 }
 
 PlayerWidget::~PlayerWidget()
@@ -18,7 +28,7 @@ void PlayerWidget::setupUI()
 {
     mainLayout = new QHBoxLayout(this);
     mainLayout->setContentsMargins(15, 10, 15, 10);
-    mainLayout->setSpacing(20);
+    mainLayout->setSpacing(0);
 
     // === Left Section: Song Info ===
     songInfoWidget = new QWidget(this);
@@ -27,19 +37,27 @@ void PlayerWidget::setupUI()
     songInfoLayout->setContentsMargins(0, 0, 0, 0);
     songInfoLayout->setSpacing(10);
 
-    // Album art
+    // Album art (clickable)
     albumArtLabel = new QLabel();
     albumArtLabel->setFixedSize(60, 60);
+    albumArtLabel->setScaledContents(true);
+    albumArtLabel->setCursor(Qt::PointingHandCursor);
     albumArtLabel->setStyleSheet(
         "background-color: #e0e0e0;"
         "border: 1px solid #d0d0d0;"
         "border-radius: 4px;"
     );
+    albumArtLabel->installEventFilter(this);
 
-    // Song title and artist
+    // Song title and artist (clickable)
     QVBoxLayout *songTextLayout = new QVBoxLayout();
     songTitleLabel = new QLabel("No song playing");
-    songTitleLabel->setStyleSheet("font-size: 13px; font-weight: 600; color: #000000;");
+    songTitleLabel->setStyleSheet(
+        "font-size: 13px; font-weight: 600; color: #000000;"
+        "QLabel:hover { text-decoration: underline; }"
+    );
+    songTitleLabel->setCursor(Qt::PointingHandCursor);
+    songTitleLabel->installEventFilter(this);
 
     songArtistLabel = new QLabel("Select a song to play");
     songArtistLabel->setStyleSheet("font-size: 11px; color: #666666;");
@@ -61,11 +79,11 @@ void PlayerWidget::setupUI()
     controlsWidget = new QWidget(this);
     controlsLayout = new QVBoxLayout(controlsWidget);
     controlsLayout->setContentsMargins(0, 0, 0, 0);
-    controlsLayout->setSpacing(8);
+    controlsLayout->setSpacing(5);
 
     // Control buttons
     buttonsLayout = new QHBoxLayout();
-    buttonsLayout->setSpacing(15);
+    buttonsLayout->setSpacing(10);
     buttonsLayout->setAlignment(Qt::AlignCenter);
 
     shuffleButton = createControlButton("🔀", 24);
@@ -88,7 +106,7 @@ void PlayerWidget::setupUI()
 
     // Progress bar with time labels
     QHBoxLayout *progressLayout = new QHBoxLayout();
-    progressLayout->setSpacing(10);
+    progressLayout->setSpacing(8);
 
     currentTimeLabel = new QLabel("0:00");
     currentTimeLabel->setStyleSheet("font-size: 11px; color: #666666;");
@@ -113,7 +131,7 @@ void PlayerWidget::setupUI()
     volumeWidget->setFixedWidth(150);
     volumeLayout = new QHBoxLayout(volumeWidget);
     volumeLayout->setContentsMargins(0, 0, 0, 0);
-    volumeLayout->setSpacing(10);
+    volumeLayout->setSpacing(8);
 
     volumeButton = createControlButton("🔊", 24);
 
@@ -198,21 +216,52 @@ QPushButton* PlayerWidget::createControlButton(const QString &icon, int size)
     return button;
 }
 
+void PlayerWidget::setupPlayerConnections()
+{
+    // Connect to PlayerService signals
+    connect(playerService, &PlayerService::trackChanged,
+            this, &PlayerWidget::onTrackChanged);
+    connect(playerService, &PlayerService::playbackStateChanged,
+            this, &PlayerWidget::onPlaybackStateChanged);
+    connect(playerService, &PlayerService::positionChanged,
+            this, &PlayerWidget::onPositionChanged);
+    connect(playerService, &PlayerService::durationChanged,
+            this, &PlayerWidget::onDurationChanged);
+
+    // Track user seeking
+    connect(progressSlider, &QSlider::sliderPressed, this, [this]() {
+        isSeekingByUser = true;
+    });
+    connect(progressSlider, &QSlider::sliderReleased, this, [this]() {
+        isSeekingByUser = false;
+        playerService->seek(progressSlider->value());
+    });
+
+    // Initialize volume from player service
+    volumeSlider->setValue(playerService->volume());
+}
+
+QString PlayerWidget::formatTime(qint64 milliseconds) const
+{
+    qint64 seconds = milliseconds / 1000;
+    qint64 minutes = seconds / 60;
+    seconds = seconds % 60;
+    return QString("%1:%2").arg(minutes).arg(seconds, 2, 10, QChar('0'));
+}
+
 void PlayerWidget::onPlayPauseClicked()
 {
-    isPlaying = !isPlaying;
-    playPauseButton->setText(isPlaying ? "⏸" : "▶");
-    // TODO: Implement actual playback control
+    playerService->togglePlayPause();
 }
 
 void PlayerWidget::onPreviousClicked()
 {
-    // TODO: Implement previous track
+    playerService->previous();
 }
 
 void PlayerWidget::onNextClicked()
 {
-    // TODO: Implement next track
+    playerService->next();
 }
 
 void PlayerWidget::onShuffleClicked()
@@ -221,6 +270,15 @@ void PlayerWidget::onShuffleClicked()
     shuffleButton->setProperty("active", isShuffle);
     shuffleButton->style()->unpolish(shuffleButton);
     shuffleButton->style()->polish(shuffleButton);
+
+    // Update player service mode
+    if (isShuffle) {
+        playerService->setPlaybackMode(PlayerService::Shuffle);
+    } else if (isRepeat) {
+        playerService->setPlaybackMode(PlayerService::RepeatAll);
+    } else {
+        playerService->setPlaybackMode(PlayerService::Sequential);
+    }
 }
 
 void PlayerWidget::onRepeatClicked()
@@ -229,12 +287,22 @@ void PlayerWidget::onRepeatClicked()
     repeatButton->setProperty("active", isRepeat);
     repeatButton->style()->unpolish(repeatButton);
     repeatButton->style()->polish(repeatButton);
+
+    // Update player service mode
+    if (isShuffle) {
+        playerService->setPlaybackMode(PlayerService::Shuffle);
+    } else if (isRepeat) {
+        playerService->setPlaybackMode(PlayerService::RepeatAll);
+    } else {
+        playerService->setPlaybackMode(PlayerService::Sequential);
+    }
 }
 
 void PlayerWidget::onProgressChanged(int value)
 {
-    Q_UNUSED(value);
-    // TODO: Implement seek functionality
+    if (!isSeekingByUser) {
+        currentTimeLabel->setText(formatTime(value));
+    }
 }
 
 void PlayerWidget::onVolumeChanged(int value)
@@ -247,5 +315,130 @@ void PlayerWidget::onVolumeChanged(int value)
     } else {
         volumeButton->setText("🔊");
     }
-    // TODO: Implement actual volume control
+
+    // Update player service volume
+    playerService->setVolume(value);
+}
+
+void PlayerWidget::onTrackChanged(const Track &track)
+{
+    qDebug() << "Track changed - Title:" << track.title() << "Artist:" << track.artist() << "Album art:" << track.albumArtPath();
+
+    songTitleLabel->setText(track.title());
+    songArtistLabel->setText(track.artist());
+
+    // Load album art if available
+    QString artPath = track.albumArtPath();
+    if (!artPath.isEmpty() && QFile::exists(artPath)) {
+        qDebug() << "Loading album art from:" << artPath;
+        QPixmap albumArt(artPath);
+        if (!albumArt.isNull()) {
+            albumArtLabel->setPixmap(albumArt.scaled(60, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+            qDebug() << "Album art loaded successfully";
+        } else {
+            qDebug() << "Failed to load album art - pixmap is null";
+        }
+    } else {
+        qDebug() << "No album art available or file doesn't exist";
+        // Set default placeholder
+        albumArtLabel->clear();
+        albumArtLabel->setStyleSheet(
+            "background-color: #e0e0e0;"
+            "border: 1px solid #d0d0d0;"
+            "border-radius: 4px;"
+        );
+    }
+}
+
+void PlayerWidget::onPlaybackStateChanged(QMediaPlayer::PlaybackState state)
+{
+    isPlaying = (state == QMediaPlayer::PlayingState);
+    playPauseButton->setText(isPlaying ? "⏸" : "▶");
+}
+
+void PlayerWidget::onPositionChanged(qint64 position)
+{
+    if (!isSeekingByUser) {
+        progressSlider->setValue(position);
+        currentTimeLabel->setText(formatTime(position));
+    }
+}
+
+void PlayerWidget::onDurationChanged(qint64 duration)
+{
+    progressSlider->setRange(0, duration);
+    totalTimeLabel->setText(formatTime(duration));
+}
+
+bool PlayerWidget::eventFilter(QObject *obj, QEvent *event)
+{
+    if ((obj == albumArtLabel || obj == songTitleLabel) && event->type() == QEvent::MouseButtonPress) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        if (mouseEvent->button() == Qt::LeftButton) {
+            onAlbumArtClicked();
+            return true;
+        }
+    }
+    return QWidget::eventFilter(obj, event);
+}
+
+void PlayerWidget::onAlbumArtClicked()
+{
+    qDebug() << "Album art clicked!";
+
+    // Find the stacked widget - it's a sibling widget in the parent's layout
+    QWidget *parent = parentWidget();
+    QStackedWidget *stackedWidget = nullptr;
+
+    if (parent) {
+        qDebug() << "Parent found:" << parent->objectName();
+        // Look for QStackedWidget among siblings
+        QList<QStackedWidget*> stackedWidgets = parent->findChildren<QStackedWidget*>();
+        qDebug() << "Found" << stackedWidgets.count() << "stacked widgets";
+        if (!stackedWidgets.isEmpty()) {
+            stackedWidget = stackedWidgets.first();
+        }
+    }
+
+    if (stackedWidget) {
+        qDebug() << "StackedWidget found! Current index:" << stackedWidget->currentIndex();
+
+        // Find or create PlayerPage
+        PlayerPage *playerPage = nullptr;
+        for (int i = 0; i < stackedWidget->count(); ++i) {
+            playerPage = qobject_cast<PlayerPage*>(stackedWidget->widget(i));
+            if (playerPage) {
+                qDebug() << "Found existing PlayerPage at index" << i;
+                break;
+            }
+        }
+
+        if (!playerPage) {
+            qDebug() << "Creating new PlayerPage";
+            // Create new PlayerPage if it doesn't exist
+            playerPage = new PlayerPage(stackedWidget);
+            stackedWidget->addWidget(playerPage);
+
+            // Connect signal to show/hide this widget when switching pages
+            connect(stackedWidget, &QStackedWidget::currentChanged, this, [this, stackedWidget](int index) {
+                // Hide PlayerWidget when on PlayerPage, show otherwise
+                PlayerPage *pp = qobject_cast<PlayerPage*>(stackedWidget->widget(index));
+                if (pp) {
+                    this->hide();
+                } else {
+                    this->show();
+                }
+            });
+        }
+
+        // Switch to PlayerPage
+        qDebug() << "Switching to PlayerPage";
+        stackedWidget->setCurrentWidget(playerPage);
+        qDebug() << "New index:" << stackedWidget->currentIndex();
+
+        // Hide this player widget
+        this->hide();
+    } else {
+        qDebug() << "ERROR: StackedWidget not found!";
+    }
 }

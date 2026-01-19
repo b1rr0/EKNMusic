@@ -2,12 +2,19 @@
 #include <QListWidgetItem>
 #include <QPushButton>
 #include <QHBoxLayout>
+#include <QFileInfo>
 
 DownloadedSongsPage::DownloadedSongsPage(QWidget *parent)
     : QWidget(parent)
+    , musicStorage(MusicStorageService::instance())
+    , playerService(PlayerService::instance())
 {
     setupUI();
-    addMockData();
+    loadDownloadedSongs();
+
+    // Connect to music storage changes
+    connect(musicStorage, &MusicStorageService::tracksChanged,
+            this, &DownloadedSongsPage::refreshSongList);
 }
 
 DownloadedSongsPage::~DownloadedSongsPage()
@@ -88,42 +95,42 @@ void DownloadedSongsPage::setupUI()
     mainLayout->addWidget(songListWidget);
 }
 
-void DownloadedSongsPage::addMockData()
+void DownloadedSongsPage::loadDownloadedSongs()
 {
-    // Mock downloaded song data
-    struct DownloadedSong {
-        QString title;
-        QString artist;
-        QString size;
-        QString duration;
-    };
+    songListWidget->clear();
+    downloadedTracks = musicStorage->getDownloadedTracks();
 
-    QList<DownloadedSong> mockSongs = {
-        {"Blinding Lights", "The Weeknd", "7.8 MB", "3:20"},
-        {"Shape of You", "Ed Sheeran", "9.1 MB", "3:53"},
-        {"Bohemian Rhapsody", "Queen", "13.6 MB", "5:55"},
-        {"Hotel California", "Eagles", "14.9 MB", "6:30"},
-        {"Imagine", "John Lennon", "7.1 MB", "3:03"}
-    };
+    if (downloadedTracks.isEmpty()) {
+        infoLabel->setText("No downloaded songs • Drop music files in: " + musicStorage->musicDirectory());
+        return;
+    }
 
-    double totalSize = 0;
-    for (const auto &song : mockSongs) {
+    qint64 totalSize = 0;
+    for (int i = 0; i < downloadedTracks.size(); ++i) {
+        const Track &track = downloadedTracks[i];
+
         QListWidgetItem *item = new QListWidgetItem(songListWidget);
-        QWidget *songWidget = createDownloadedSongItem(song.title, song.artist, song.size, song.duration);
+        QWidget *songWidget = createDownloadedSongItem(track, i);
         item->setSizeHint(songWidget->sizeHint());
         songListWidget->setItemWidget(item, songWidget);
 
         // Calculate total size
-        totalSize += song.size.split(" ")[0].toDouble();
+        QFileInfo fileInfo(track.filePath());
+        totalSize += fileInfo.size();
     }
 
+    double totalSizeMB = totalSize / (1024.0 * 1024.0);
     infoLabel->setText(QString("%1 songs • %2 MB")
-                           .arg(mockSongs.size())
-                           .arg(totalSize, 0, 'f', 1));
+                           .arg(downloadedTracks.size())
+                           .arg(totalSizeMB, 0, 'f', 1));
 }
 
-QWidget* DownloadedSongsPage::createDownloadedSongItem(const QString &title, const QString &artist,
-                                                       const QString &size, const QString &duration)
+void DownloadedSongsPage::refreshSongList()
+{
+    loadDownloadedSongs();
+}
+
+QWidget* DownloadedSongsPage::createDownloadedSongItem(const Track &track, int index)
 {
     QWidget *widget = new QWidget();
     widget->setMinimumHeight(70);
@@ -132,7 +139,7 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const QString &title, con
     layout->setSpacing(15);
 
     // Simple download icon
-    QLabel *iconLabel = new QLabel("✓");
+    QLabel *iconLabel = new QLabel("♪");
     iconLabel->setFixedSize(36, 36);
     iconLabel->setAlignment(Qt::AlignCenter);
     iconLabel->setStyleSheet(
@@ -140,7 +147,7 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const QString &title, con
         "border: 1px solid #d0d0d0;"
         "border-radius: 18px;"
         "color: #000000;"
-        "font-size: 16px;"
+        "font-size: 18px;"
         "font-weight: bold;"
     );
 
@@ -148,7 +155,7 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const QString &title, con
     QVBoxLayout *infoLayout = new QVBoxLayout();
     infoLayout->setSpacing(5);
 
-    QLabel *titleLabel = new QLabel(title);
+    QLabel *titleLabel = new QLabel(track.title());
     titleLabel->setStyleSheet(
         "font-size: 15px;"
         "font-weight: 600;"
@@ -156,7 +163,7 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const QString &title, con
     );
     titleLabel->setWordWrap(false);
 
-    QLabel *artistLabel = new QLabel(artist);
+    QLabel *artistLabel = new QLabel(track.artist());
     artistLabel->setStyleSheet(
         "font-size: 13px;"
         "color: #888888;"
@@ -167,16 +174,18 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const QString &title, con
     infoLayout->addWidget(artistLabel);
 
     // File size
-    QLabel *sizeLabel = new QLabel(size);
+    QFileInfo fileInfo(track.filePath());
+    double sizeMB = fileInfo.size() / (1024.0 * 1024.0);
+    QLabel *sizeLabel = new QLabel(QString("%1 MB").arg(sizeMB, 0, 'f', 1));
     sizeLabel->setStyleSheet(
         "font-size: 13px;"
         "color: #666666;"
         "padding: 5px;"
     );
-    sizeLabel->setMinimumWidth(60);
+    sizeLabel->setMinimumWidth(70);
 
-    // Duration
-    QLabel *durationLabel = new QLabel(duration);
+    // Duration (placeholder for now)
+    QLabel *durationLabel = new QLabel("--:--");
     durationLabel->setStyleSheet(
         "font-size: 13px;"
         "color: #666666;"
@@ -202,6 +211,9 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const QString &title, con
         "}"
     );
     deleteBtn->setCursor(Qt::PointingHandCursor);
+    connect(deleteBtn, &QPushButton::clicked, this, [this, index]() {
+        onDeleteButtonClicked(index);
+    });
 
     // Simple play button
     QPushButton *playBtn = new QPushButton("▶");
@@ -219,6 +231,9 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const QString &title, con
         "}"
     );
     playBtn->setCursor(Qt::PointingHandCursor);
+    connect(playBtn, &QPushButton::clicked, this, [this, index]() {
+        onPlayButtonClicked(index);
+    });
 
     layout->addWidget(iconLabel);
     layout->addLayout(infoLayout, 1);
@@ -232,6 +247,28 @@ QWidget* DownloadedSongsPage::createDownloadedSongItem(const QString &title, con
 
 void DownloadedSongsPage::onSongItemClicked(QListWidgetItem *item)
 {
-    // Handle downloaded song click (play song in future iterations)
     Q_UNUSED(item);
+    // Double-click handling can be implemented here
+}
+
+void DownloadedSongsPage::onPlayButtonClicked(int index)
+{
+    if (index >= 0 && index < downloadedTracks.size()) {
+        // Set playlist and play selected track
+        playerService->setPlaylist(downloadedTracks);
+        // The setPlaylist method already starts playing the first track,
+        // but we want to play the selected one, so we need to adjust
+        for (int i = 0; i < index; ++i) {
+            playerService->next();
+        }
+    }
+}
+
+void DownloadedSongsPage::onDeleteButtonClicked(int index)
+{
+    if (index >= 0 && index < downloadedTracks.size()) {
+        const Track &track = downloadedTracks[index];
+        musicStorage->deleteTrack(track.filePath());
+        // List will be refreshed automatically via tracksChanged signal
+    }
 }
