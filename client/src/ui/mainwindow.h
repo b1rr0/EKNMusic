@@ -14,6 +14,7 @@
 class PlayerWidget;
 class SearchPage;
 class DownloadedSongsPage;
+class RadioPage;
 
 class MainWindow : public QMainWindow
 {
@@ -26,6 +27,9 @@ public:
 private slots:
     void showSearch();
     void showDownloaded();
+    void showRadio();
+    void switchToSongsMode();
+    void switchToRadioMode();
 
 private:
     void setupUI();
@@ -42,8 +46,16 @@ private:
     QWidget *sidebar;
     QVBoxLayout *sidebarLayout;
     QLabel *logoLabel;
+
+    // Mode toggle
+    QWidget *modeToggleWidget;
+    QPushButton *songsBtn;
+    QPushButton *radioBtn;
+
+    // Navigation buttons (will change based on mode)
     QPushButton *searchBtn;
     QPushButton *downloadedBtn;
+    QPushButton *eknmIntercomBtn;
 
     // Content area
     QWidget *contentArea;
@@ -53,9 +65,14 @@ private:
     // Pages
     SearchPage *searchPage;
     DownloadedSongsPage *downloadedPage;
+    RadioPage *radioPage;
 
     // Player
     PlayerWidget *playerWidget;
+
+    // Current mode
+    enum Mode { SONGS, RADIO };
+    Mode currentMode;
 };
 
 #endif // MAINWINDOW_H

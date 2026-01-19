@@ -1,10 +1,12 @@
 #include "mainwindow.h"
 #include "searchpage.h"
 #include "downloadedpage.h"
+#include "radiopage.h"
 #include "playerwidget.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
+    , currentMode(SONGS)
 {
     setupUI();
     applyStyles();
@@ -56,18 +58,65 @@ void MainWindow::createSidebar()
     }
     logoLabel->setStyleSheet("margin-bottom: 20px;");
 
-    // Navigation buttons (removed Liked Songs)
+    // Mode toggle (SONGS / RADIO)
+    modeToggleWidget = new QWidget(sidebar);
+    QHBoxLayout *toggleLayout = new QHBoxLayout(modeToggleWidget);
+    toggleLayout->setSpacing(0);
+    toggleLayout->setContentsMargins(0, 0, 0, 0);
+
+    songsBtn = new QPushButton("SONGS", modeToggleWidget);
+    radioBtn = new QPushButton("RADIO", modeToggleWidget);
+
+    songsBtn->setCheckable(true);
+    radioBtn->setCheckable(true);
+    songsBtn->setChecked(true); // Default mode
+
+    songsBtn->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #000000;"
+        "   color: #FFFFFF;"
+        "   border: none;"
+        "   padding: 10px;"
+        "   font-size: 12px;"
+        "   font-weight: bold;"
+        "}"
+        "QPushButton:checked {"
+        "   background-color: #000000;"
+        "   color: #FFFFFF;"
+        "}"
+        "QPushButton:!checked {"
+        "   background-color: #e0e0e0;"
+        "   color: #666666;"
+        "}"
+    );
+    radioBtn->setStyleSheet(songsBtn->styleSheet());
+
+    toggleLayout->addWidget(songsBtn);
+    toggleLayout->addWidget(radioBtn);
+
+    connect(songsBtn, &QPushButton::clicked, this, &MainWindow::switchToSongsMode);
+    connect(radioBtn, &QPushButton::clicked, this, &MainWindow::switchToRadioMode);
+
+    // Navigation buttons for SONGS mode
     searchBtn = createNavButton("🔍 Search", "🔍");
     downloadedBtn = createNavButton("⬇ Downloads", "⬇");
+
+    // Navigation button for RADIO mode
+    eknmIntercomBtn = createNavButton("📻 EKNM Intercom", "📻");
+    eknmIntercomBtn->setVisible(false); // Hidden by default
 
     // Connect signals
     connect(searchBtn, &QPushButton::clicked, this, &MainWindow::showSearch);
     connect(downloadedBtn, &QPushButton::clicked, this, &MainWindow::showDownloaded);
+    connect(eknmIntercomBtn, &QPushButton::clicked, this, &MainWindow::showRadio);
 
     // Add widgets to sidebar
     sidebarLayout->addWidget(logoLabel);
+    sidebarLayout->addWidget(modeToggleWidget);
+    sidebarLayout->addSpacing(10);
     sidebarLayout->addWidget(searchBtn);
     sidebarLayout->addWidget(downloadedBtn);
+    sidebarLayout->addWidget(eknmIntercomBtn);
     sidebarLayout->addStretch();
 
     mainLayout->addWidget(sidebar);
@@ -85,13 +134,15 @@ void MainWindow::createContent()
     // Create stacked widget for pages
     stackedWidget = new QStackedWidget(contentArea);
 
-    // Create pages (removed Liked Songs)
+    // Create pages
     searchPage = new SearchPage(stackedWidget);
     downloadedPage = new DownloadedSongsPage(stackedWidget);
+    radioPage = new RadioPage(stackedWidget);
 
     // Add pages to stacked widget
     stackedWidget->addWidget(searchPage);
     stackedWidget->addWidget(downloadedPage);
+    stackedWidget->addWidget(radioPage);
 
     // Create player widget
     playerWidget = new PlayerWidget(contentArea);
@@ -170,4 +221,55 @@ void MainWindow::showDownloaded()
     searchBtn->style()->polish(searchBtn);
     downloadedBtn->style()->unpolish(downloadedBtn);
     downloadedBtn->style()->polish(downloadedBtn);
+}
+
+void MainWindow::showRadio()
+{
+    stackedWidget->setCurrentWidget(radioPage);
+    eknmIntercomBtn->setProperty("active", true);
+
+    // Load radio background
+    radioPage->loadRadioBackground();
+
+    // Refresh styles
+    eknmIntercomBtn->style()->unpolish(eknmIntercomBtn);
+    eknmIntercomBtn->style()->polish(eknmIntercomBtn);
+}
+
+void MainWindow::switchToSongsMode()
+{
+    currentMode = SONGS;
+
+    // Update toggle buttons
+    songsBtn->setChecked(true);
+    radioBtn->setChecked(false);
+
+    // Show SONGS navigation buttons
+    searchBtn->setVisible(true);
+    downloadedBtn->setVisible(true);
+
+    // Hide RADIO navigation buttons
+    eknmIntercomBtn->setVisible(false);
+
+    // Show search page by default
+    showSearch();
+}
+
+void MainWindow::switchToRadioMode()
+{
+    currentMode = RADIO;
+
+    // Update toggle buttons
+    songsBtn->setChecked(false);
+    radioBtn->setChecked(true);
+
+    // Hide SONGS navigation buttons
+    searchBtn->setVisible(false);
+    downloadedBtn->setVisible(false);
+
+    // Show RADIO navigation buttons
+    eknmIntercomBtn->setVisible(true);
+
+    // Show radio page by default
+    showRadio();
 }

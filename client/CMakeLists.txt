@@ -35,6 +35,7 @@ set(SOURCES
     src/ui/likedsongs.cpp
     src/ui/searchpage.cpp
     src/ui/downloadedpage.cpp
+    src/ui/radiopage.cpp
     src/ui/playerwidget.cpp
     src/ui/playerpage.cpp
     src/models/track.cpp
@@ -50,6 +51,7 @@ set(HEADERS
     src/ui/likedsongs.h
     src/ui/searchpage.h
     src/ui/downloadedpage.h
+    src/ui/radiopage.h
     src/ui/playerwidget.h
     src/ui/playerpage.h
     src/models/track.h
