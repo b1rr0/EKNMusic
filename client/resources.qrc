@@ -4,6 +4,9 @@
     </qresource>
     <qresource prefix="/images">
         <file>src/resources/images/playButton.png</file>
+        <file>src/resources/images/playButton.svg</file>
+        <file>src/resources/images/pauseButton.jpg</file>
+        <file>src/resources/images/pauseButton.svg</file>
         <file>src/resources/images/songAnimation.gif</file>
         <file>src/resources/images/background.png</file>
         <file>src/resources/images/logo.png</file>

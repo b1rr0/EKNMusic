@@ -1,13 +1,13 @@
 @echo off
-echo ========================================
-echo  EKNMusic - Сборка установщика
-echo ========================================
-echo.
+     echo ========================================
+     echo  EKNMusic - Сборка установщика
+     echo ========================================
+     echo.
 
-echo [1/4] Очистка старых файлов...
-cd client
-if exist build-release rmdir /s /q build-release
-cd ..
+     echo [1/4] Очистка старых файлов...
+     cd client
+     if exist build-release rmdir /s /q build-release
+     cd ..
 
 echo [2/4] Сборка Release версии EKNMusic...
 cd client

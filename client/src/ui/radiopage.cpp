@@ -8,21 +8,18 @@
 
 RadioPage::RadioPage(QWidget *parent)
     : QWidget(parent)
+    , m_radioService(RadioService::instance())
     , networkManager(new QNetworkAccessManager(this))
     , updateTimer(new QTimer(this))
     , currentDuration(0)
     , currentElapsed(0)
 {
     setupUI();
+    connectSignals();
 
-    connect(networkManager, &QNetworkAccessManager::finished,
-            this, &RadioPage::onNowPlayingDataReceived);
-
-    connect(updateTimer, &QTimer::timeout,
-            this, &RadioPage::updateNowPlaying);
-
-    // Update every 5 seconds
-    updateTimer->setInterval(5000);
+    // Update progress bar every second
+    updateTimer->setInterval(1000);
+    connect(updateTimer, &QTimer::timeout, this, &RadioPage::updateProgressBar);
 }
 
 RadioPage::~RadioPage()
@@ -134,6 +131,8 @@ void RadioPage::setupUI()
     progressBar = new QSlider(Qt::Horizontal, playerCard);
     progressBar->setRange(0, 100);
     progressBar->setValue(35);
+    progressBar->setEnabled(false); // Make non-interactive (display only)
+    progressBar->setFocusPolicy(Qt::NoFocus); // Remove focus
     progressBar->setStyleSheet(
         "QSlider::groove:horizontal {"
         "   border: none;"
@@ -151,6 +150,9 @@ void RadioPage::setupUI()
         "QSlider::sub-page:horizontal {"
         "   background: #4a9eff;"
         "   border-radius: 2px;"
+        "}"
+        "QSlider:disabled {"
+        "   opacity: 1.0;" // Keep full opacity when disabled
         "}"
     );
 
@@ -170,21 +172,21 @@ void RadioPage::setupUI()
     controlsLayout->setSpacing(15);
     controlsLayout->setAlignment(Qt::AlignCenter);
 
-    playPauseBtn = new QPushButton("▶", playerCard);
+    playPauseBtn = new QPushButton(playerCard);
     playPauseBtn->setFixedSize(50, 50);
+    playPauseBtn->setIcon(QIcon(":/images/src/resources/images/playButton.png"));
+    playPauseBtn->setIconSize(QSize(50, 50));
     playPauseBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: white;"
-        "   color: #1a1a2e;"
+        "   background-color: transparent;"
         "   border: none;"
         "   border-radius: 25px;"
-        "   font-size: 18px;"
-        "   font-weight: bold;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #f0f0f0;"
+        "   background-color: rgba(255, 255, 255, 0.1);"
         "}"
     );
+    connect(playPauseBtn, &QPushButton::clicked, this, &RadioPage::onPlayPauseClicked);
 
     // Volume controls
     volumeBtn = new QPushButton("🔊", playerCard);
@@ -203,6 +205,8 @@ void RadioPage::setupUI()
     volumeSlider->setRange(0, 100);
     volumeSlider->setValue(75);
     volumeSlider->setStyleSheet(progressBar->styleSheet());
+    connect(volumeSlider, &QSlider::valueChanged, this, &RadioPage::onVolumeSliderChanged);
+    connect(volumeBtn, &QPushButton::clicked, this, &RadioPage::onVolumeBtnClicked);
 
     controlsLayout->addWidget(playPauseBtn);
     controlsLayout->addSpacing(20);
@@ -244,6 +248,10 @@ void RadioPage::setupUI()
     requestSongBtn->setStyleSheet(buttonStyle);
     playlistBtn->setStyleSheet(buttonStyle);
 
+    connect(songHistoryBtn, &QPushButton::clicked, this, &RadioPage::onSongHistoryClicked);
+    connect(requestSongBtn, &QPushButton::clicked, this, &RadioPage::onRequestSongClicked);
+    connect(playlistBtn, &QPushButton::clicked, this, &RadioPage::onPlaylistClicked);
+
     bottomButtonsLayout->addWidget(songHistoryBtn);
     bottomButtonsLayout->addWidget(requestSongBtn);
     bottomButtonsLayout->addWidget(playlistBtn);
@@ -258,85 +266,63 @@ void RadioPage::setupUI()
 
 void RadioPage::loadRadioBackground()
 {
-    fetchNowPlayingData();
+    // Start fetching now playing data
+    m_radioService->fetchNowPlaying();
+
+    // Start the update timer
     updateTimer->start();
 }
 
-void RadioPage::fetchNowPlayingData()
+void RadioPage::connectSignals()
 {
-    QString apiUrl = "https://radio.eknm.in/api/nowplaying/eknm_intercom";
+    // Connect RadioService signals
+    connect(m_radioService, &RadioService::nowPlayingUpdated,
+            this, &RadioPage::onNowPlayingUpdated);
 
-    QNetworkRequest request;
-    request.setUrl(QUrl(apiUrl));
-    request.setHeader(QNetworkRequest::UserAgentHeader, "EKNMusic/1.0");
+    connect(m_radioService, &RadioService::playbackStateChanged,
+            this, &RadioPage::onPlaybackStateChanged);
 
-    networkManager->get(request);
-
-    qDebug() << "Fetching now playing data from:" << apiUrl;
+    connect(m_radioService, &RadioService::songRequestSubmitted,
+            this, [this](bool success, const QString &message) {
+        qDebug() << "Song request result:" << success << message;
+        // TODO: Show notification to user
+    });
 }
 
-void RadioPage::onNowPlayingDataReceived(QNetworkReply *reply)
+void RadioPage::onNowPlayingUpdated(const RadioService::NowPlayingInfo &info)
 {
-    if (reply->error() == QNetworkReply::NoError) {
-        QByteArray responseData = reply->readAll();
-        QJsonDocument doc = QJsonDocument::fromJson(responseData);
-        QJsonObject obj = doc.object();
+    // Update song info
+    songTitleLabel->setText(info.song.title);
+    artistLabel->setText(info.song.artist);
+    stationTitle->setText(info.stationName);
 
-        qDebug() << "API Response:" << doc.toJson(QJsonDocument::Compact);
+    // Update timing
+    currentElapsed = info.elapsed;
+    currentDuration = info.duration;
 
-        if (obj.contains("now_playing")) {
-            QJsonObject nowPlaying = obj["now_playing"].toObject();
+    if (currentDuration > 0) {
+        int progress = (currentElapsed * 100) / currentDuration;
+        progressBar->setValue(progress);
 
-            if (nowPlaying.contains("song")) {
-                QJsonObject song = nowPlaying["song"].toObject();
+        int elapsedMin = currentElapsed / 60;
+        int elapsedSec = currentElapsed % 60;
+        int durationMin = currentDuration / 60;
+        int durationSec = currentDuration % 60;
 
-                // Extract song info
-                currentSongTitle = song["title"].toString();
-                currentArtist = song["artist"].toString();
-                QString artUrl = song["art"].toString();
-
-                // Update UI
-                songTitleLabel->setText(currentSongTitle);
-                artistLabel->setText(currentArtist);
-
-                // Update elapsed/duration
-                if (nowPlaying.contains("elapsed")) {
-                    currentElapsed = nowPlaying["elapsed"].toInt();
-                }
-                if (nowPlaying.contains("duration")) {
-                    currentDuration = nowPlaying["duration"].toInt();
-                }
-
-                // Update progress
-                if (currentDuration > 0) {
-                    int progress = (currentElapsed * 100) / currentDuration;
-                    progressBar->setValue(progress);
-
-                    // Format time
-                    int elapsedMin = currentElapsed / 60;
-                    int elapsedSec = currentElapsed % 60;
-                    int durationMin = currentDuration / 60;
-                    int durationSec = currentDuration % 60;
-
-                    timeCurrentLabel->setText(QString("%1:%2")
-                        .arg(elapsedMin, 2, 10, QChar('0'))
-                        .arg(elapsedSec, 2, 10, QChar('0')));
-                    timeTotalLabel->setText(QString("%1:%2")
-                        .arg(durationMin, 2, 10, QChar('0'))
-                        .arg(durationSec, 2, 10, QChar('0')));
-                }
-
-                // Update background and album art
-                if (!artUrl.isEmpty() && artUrl != currentBackgroundUrl) {
-                    updateBackgroundImage(artUrl);
-                }
-            }
-        }
-    } else {
-        qWarning() << "Failed to fetch now playing data:" << reply->errorString();
+        timeCurrentLabel->setText(QString("%1:%2")
+            .arg(elapsedMin, 2, 10, QChar('0'))
+            .arg(elapsedSec, 2, 10, QChar('0')));
+        timeTotalLabel->setText(QString("%1:%2")
+            .arg(durationMin, 2, 10, QChar('0'))
+            .arg(durationSec, 2, 10, QChar('0')));
     }
 
-    reply->deleteLater();
+    // Update background and album art
+    if (!info.song.artUrl.isEmpty() && info.song.artUrl != currentBackgroundUrl) {
+        updateBackgroundImage(info.song.artUrl);
+    }
+
+    qDebug() << "Now playing updated:" << info.song.artist << "-" << info.song.title;
 }
 
 void RadioPage::updateBackgroundImage(const QString &imageUrl)
@@ -369,11 +355,58 @@ void RadioPage::updateBackgroundImage(const QString &imageUrl)
     });
 }
 
-void RadioPage::updateNowPlaying()
+void RadioPage::onPlaybackStateChanged(bool isPlaying)
+{
+    if (isPlaying) {
+        playPauseBtn->setIcon(QIcon(":/images/src/resources/images/pauseButton.jpg"));
+    } else {
+        playPauseBtn->setIcon(QIcon(":/images/src/resources/images/playButton.png"));
+    }
+}
+
+void RadioPage::onPlayPauseClicked()
+{
+    m_radioService->togglePlayPause();
+}
+
+void RadioPage::onVolumeSliderChanged(int value)
+{
+    m_radioService->setVolume(value);
+}
+
+void RadioPage::onVolumeBtnClicked()
+{
+    bool currentlyMuted = m_radioService->isMuted();
+    m_radioService->setMuted(!currentlyMuted);
+    volumeBtn->setText(currentlyMuted ? "🔊" : "🔇");
+}
+
+void RadioPage::onSongHistoryClicked()
+{
+    qDebug() << "Song History button clicked";
+    m_radioService->fetchSongHistory(20);
+    // TODO: Show song history dialog
+}
+
+void RadioPage::onRequestSongClicked()
+{
+    qDebug() << "Request Song button clicked";
+    m_radioService->fetchRequestableSongs();
+    // TODO: Show request song dialog
+}
+
+void RadioPage::onPlaylistClicked()
+{
+    qDebug() << "Playlist button clicked";
+    m_radioService->fetchQueue();
+    // TODO: Show queue/playlist dialog
+}
+
+void RadioPage::updateProgressBar()
 {
     // Increment elapsed time locally
-    if (currentDuration > 0 && currentElapsed < currentDuration) {
-        currentElapsed += 5; // Add 5 seconds
+    if (m_radioService->isPlaying() && currentDuration > 0 && currentElapsed < currentDuration) {
+        currentElapsed += 1; // Add 1 second
 
         int progress = (currentElapsed * 100) / currentDuration;
         progressBar->setValue(progress);
@@ -385,6 +418,11 @@ void RadioPage::updateNowPlaying()
             .arg(elapsedSec, 2, 10, QChar('0')));
     }
 
-    // Fetch fresh data every update
-    fetchNowPlayingData();
+    // Fetch fresh data every 5 seconds
+    static int counter = 0;
+    counter++;
+    if (counter >= 5) {
+        m_radioService->fetchNowPlaying();
+        counter = 0;
+    }
 }

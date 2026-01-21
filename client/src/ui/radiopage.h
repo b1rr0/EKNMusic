@@ -11,6 +11,7 @@
 #include <QNetworkReply>
 #include <QPixmap>
 #include <QTimer>
+#include "services/radioservice.h"
 
 class RadioPage : public QWidget
 {
@@ -23,13 +24,20 @@ public:
     void loadRadioBackground();
 
 private slots:
-    void onNowPlayingDataReceived(QNetworkReply *reply);
-    void updateNowPlaying();
+    void onNowPlayingUpdated(const RadioService::NowPlayingInfo &info);
+    void onPlaybackStateChanged(bool isPlaying);
+    void onPlayPauseClicked();
+    void onVolumeSliderChanged(int value);
+    void onVolumeBtnClicked();
+    void onSongHistoryClicked();
+    void onRequestSongClicked();
+    void onPlaylistClicked();
+    void updateProgressBar();
 
 private:
     void setupUI();
-    void fetchNowPlayingData();
     void updateBackgroundImage(const QString &imageUrl);
+    void connectSignals();
 
     // Main layout
     QLabel *backgroundLabel;
@@ -53,12 +61,11 @@ private:
     QPushButton *requestSongBtn;
     QPushButton *playlistBtn;
 
-    // Network & Data
+    // Services & Data
+    RadioService *m_radioService;
     QNetworkAccessManager *networkManager;
     QTimer *updateTimer;
     QString currentBackgroundUrl;
-    QString currentSongTitle;
-    QString currentArtist;
     int currentDuration;
     int currentElapsed;
 };

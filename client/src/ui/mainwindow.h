@@ -14,7 +14,7 @@
 class PlayerWidget;
 class SearchPage;
 class DownloadedSongsPage;
-class RadioPage;
+class EknmIntercomRadioPage;
 
 class MainWindow : public QMainWindow
 {
@@ -65,7 +65,7 @@ private:
     // Pages
     SearchPage *searchPage;
     DownloadedSongsPage *downloadedPage;
-    RadioPage *radioPage;
+    EknmIntercomRadioPage *radioPage;
 
     // Player
     PlayerWidget *playerWidget;

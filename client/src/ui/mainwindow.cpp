@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "searchpage.h"
 #include "downloadedpage.h"
-#include "radiopage.h"
+#include "eknmintercomradiopage.h"
 #include "playerwidget.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -11,7 +11,8 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
     applyStyles();
 
-    resize(1200, 800);
+    resize(1380, 800);
+    setMinimumSize(1380, 800);
     setWindowTitle("EKNMusic");
 
     // Show Search page by default
@@ -137,7 +138,7 @@ void MainWindow::createContent()
     // Create pages
     searchPage = new SearchPage(stackedWidget);
     downloadedPage = new DownloadedSongsPage(stackedWidget);
-    radioPage = new RadioPage(stackedWidget);
+    radioPage = new EknmIntercomRadioPage(stackedWidget);
 
     // Add pages to stacked widget
     stackedWidget->addWidget(searchPage);
@@ -191,6 +192,7 @@ void MainWindow::applyStyles()
 
 QPushButton* MainWindow::createNavButton(const QString &text, const QString &iconText)
 {
+    Q_UNUSED(iconText);  // Reserved for future icon support
     QPushButton *button = new QPushButton(text, sidebar);
     button->setCursor(Qt::PointingHandCursor);
     button->setProperty("active", false);
@@ -225,6 +227,12 @@ void MainWindow::showDownloaded()
 
 void MainWindow::showRadio()
 {
+    // If we're not in RADIO mode yet, switch to it first
+    if (currentMode != RADIO) {
+        switchToRadioMode();
+        return;
+    }
+
     stackedWidget->setCurrentWidget(radioPage);
     eknmIntercomBtn->setProperty("active", true);
 

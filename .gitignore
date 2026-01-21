@@ -1,0 +1,113 @@
+# Build directories
+build/
+build-*/
+cmake-build-*/
+out/
+bin/
+obj/
+Debug/
+Release/
+RelWithDebInfo/
+MinSizeRel/
+
+# Qt specific
+*.pro.user
+*.pro.user.*
+*.qmlc
+*.jsc
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.autosave
+
+# Qt Creator
+*.creator
+*.creator.user
+*.includes
+*.files
+*.config
+*.cflags
+*.cxxflags
+
+# Qt Settings (contains API keys and user data)
+*.ini
+*.conf
+.qsettings
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+.cmake/
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Windows specific
+Thumbs.db
+desktop.ini
+*.stackdump
+
+# macOS specific
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# Linux specific
+*.core
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.old
+
+# API keys and secrets (if stored in separate files)
+secrets.h
+secrets.cpp
+api_keys.txt
+*.pem
+*.key
+
+# User-specific Qt configuration
+client/.qmake.stash
+client/.qmake.cache
+
+# Backend environment files (if applicable)
+backend/.env
+backend/.env.local
+backend/__pycache__/
+backend/*.pyc
+backend/venv/
+backend/.venv/
+
+# Package files
+*.zip
+*.tar.gz
+*.rar
+
+# Node modules (if any JS tooling is used)
+node_modules/

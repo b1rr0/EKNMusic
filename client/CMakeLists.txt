@@ -52,11 +52,15 @@ set(SOURCES
     src/ui/searchpage.cpp
     src/ui/downloadedpage.cpp
     src/ui/radiopage.cpp
+    src/ui/baseradiopage.cpp
+    src/ui/eknmintercomradiopage.cpp
     src/ui/playerwidget.cpp
     src/ui/playerpage.cpp
     src/models/track.cpp
     src/models/playlistdata.cpp
     src/services/playerservice.cpp
+    src/services/radioservice.cpp
+    src/services/mediastatemanager.cpp
     src/services/musicstorageservice.cpp
     src/services/metadataextractor.cpp
 )
@@ -69,11 +73,15 @@ set(HEADERS
     src/ui/searchpage.h
     src/ui/downloadedpage.h
     src/ui/radiopage.h
+    src/ui/baseradiopage.h
+    src/ui/eknmintercomradiopage.h
     src/ui/playerwidget.h
     src/ui/playerpage.h
     src/models/track.h
     src/models/playlistdata.h
     src/services/playerservice.h
+    src/services/radioservice.h
+    src/services/mediastatemanager.h
     src/services/musicstorageservice.h
     src/services/metadataextractor.h
 )

@@ -1,4 +1,5 @@
 #include "playerservice.h"
+#include "mediastatemanager.h"
 #include <QRandomGenerator>
 #include <QStandardPaths>
 #include <QDir>
@@ -15,6 +16,10 @@ PlayerService::PlayerService(QObject *parent)
     m_mediaPlayer->setAudioOutput(m_audioOutput);
     m_audioOutput->setVolume(0.7); // Default volume 70%
     setupConnections();
+
+    // Connect to global media state manager
+    connect(MediaStateManager::instance(), &MediaStateManager::stopMusicPlayer,
+            this, &PlayerService::stop);
 }
 
 PlayerService::~PlayerService()
@@ -55,6 +60,8 @@ void PlayerService::setupConnections()
 void PlayerService::play()
 {
     if (m_currentTrack.isValid()) {
+        // Request playback from media state manager (will stop radio if active)
+        MediaStateManager::instance()->requestPlayback(MediaStateManager::MediaSource::MusicPlayer);
         m_mediaPlayer->play();
     }
 }
@@ -67,6 +74,9 @@ void PlayerService::pause()
 void PlayerService::stop()
 {
     m_mediaPlayer->stop();
+
+    // Notify media state manager that music player stopped
+    MediaStateManager::instance()->notifyStopped(MediaStateManager::MediaSource::MusicPlayer);
 }
 
 void PlayerService::togglePlayPause()
